@@ -1,0 +1,25 @@
+# Ignore local/system files
+.DS_Store
+.idea/
+.vscode/
+Thumbs.db
+
+# Environment/secrets
+.env
+.env.*
+
+# Dependencies (in case of future composer/npm usage)
+node_modules/
+vendor/
+
+# Logs and debug
+*.log
+debug.log
+
+# Build artifacts
+dist/
+build/
+
+# Plugin-specific: do NOT version backups or local exports
+backups/
+*.bak
