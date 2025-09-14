@@ -18,7 +18,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('QVC_EMAIL_MANAGER_VERSION', '2.2.0');
+define('QVC_EMAIL_MANAGER_VERSION', '3.2.2');
 define('QVC_EMAIL_MANAGER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('QVC_EMAIL_MANAGER_PLUGIN_URL', plugin_dir_url(__FILE__));
 
