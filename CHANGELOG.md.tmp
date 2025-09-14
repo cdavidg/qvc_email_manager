@@ -1,13 +1,6 @@
 # Changelog
 
 ## [Unreleased]
-
-## [3.2.4] - 2025-09-14
-- Alineación de nonce `qvc_email_nonce` para `qvc_load_recipient_preview`
-- Restauración de `init_hooks()` y `enqueue_admin_scripts()` en `class-admin-email-interface.php`
-- Tabla de destinatarios con checkboxes y paginación (UI restaurada)
-- `.gitignore` seguro (ignora `backups/`, logs, artefactos locales)
-
 - Alineación de nonce `qvc_email_nonce` para `qvc_load_recipient_preview`
 - Restauración de `init_hooks()` y `enqueue_admin_scripts()` en `class-admin-email-interface.php`
 - Tabla de destinatarios con checkboxes y paginación (UI restaurada)
