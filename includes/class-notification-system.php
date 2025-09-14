@@ -268,14 +268,9 @@ class QvaClick_Notification_System {
      * Cargar scripts y estilos de notificaciones
      */
     public function enqueue_notification_scripts($hook) {
-        // Solo cargar en páginas de admin relevantes (qvc* o qvaclick*) o dashboard
-        if (
-            strpos($hook, 'qvc') === false &&
-            strpos($hook, 'qvaclick') === false &&
-            !in_array($hook, array('index.php', 'dashboard'))
-        ) {
-            return;
-        }
+    // Cargar los estilos y el JS en todas las páginas de admin para
+    // garantizar que la burbuja de notificación siempre esté disponible
+    // (es una pequeña regla CSS/JS que no impacta rendimiento).
         
         // CSS para las notificaciones
         wp_add_inline_style('wp-admin', '

@@ -289,13 +289,23 @@ class QvaClick_Admin_Email_Manager {
         $smtp_debug['smtp_config'] = $this->check_smtp_configuration();
         
         try {
-            // Hook para capturar errores de wp_mail
-            add_action('wp_mail_failed', array($this, 'capture_mail_error'));
-            
-            $sent = wp_mail($to, $subject, $content, $headers);
+            // Detect pre_wp_mail short-circuit (eg. dev/emergency MU-plugins)
+            $mail_atts = array('to' => $to, 'subject' => $subject, 'message' => $content, 'headers' => $headers);
+            $pre_wp = apply_filters('pre_wp_mail', null, $mail_atts);
+            if ($pre_wp !== null) {
+                // pre_wp_mail short-circuited the sending (likely dev/emergency mode)
+                $smtp_debug['pre_wp_mail'] = $pre_wp;
+                $sent = false;
+                $this->last_mail_error = 'pre_wp_mail short-circuited sending (value: ' . var_export($pre_wp, true) . ')';
+            } else {
+                // Hook para capturar errores de wp_mail
+                add_action('wp_mail_failed', array($this, 'capture_mail_error'));
+
+                $sent = wp_mail($to, $subject, $content, $headers);
+            }
             
             $status = $sent ? 'sent' : 'failed';
-            $error_message = $sent ? null : 'wp_mail returned false - check SMTP configuration';
+            $error_message = $sent ? null : ($this->last_mail_error ? $this->last_mail_error : 'wp_mail returned false - check SMTP configuration');
             
             // Actualizar bandeja de salida
             $wpdb->update(
@@ -1114,18 +1124,18 @@ class QvaClick_Admin_Email_Manager {
         
         foreach ($recipients as $recipient) {
             $tracking_id = wp_generate_password(32, false);
-            
+
             // Personalizar contenido
             $subject = $this->personalize_content($mass_email->subject, $recipient);
             $content = $this->personalize_content($mass_email->content, $recipient);
-            
+
             // Aplicar plantilla base si es necesario
             if (class_exists('QvaClick_Base_Template_Manager')) {
                 $content = QvaClick_Base_Template_Manager::apply_to_html($content);
             }
-            
+
             $headers = array('Content-Type: text/html; charset=UTF-8');
-            
+
             // NUEVO: Registrar en bandeja de salida ANTES del envío
             $outbox_table = $wpdb->prefix . 'qvc_email_outbox';
             $outbox_data = array(
@@ -1142,29 +1152,63 @@ class QvaClick_Admin_Email_Manager {
                 'created_by' => get_current_user_id(),
                 'tracking_id' => $tracking_id
             );
-            
+
             $outbox_result = $wpdb->insert($outbox_table, $outbox_data);
             if ($outbox_result === false) {
                 error_log('QVC Email Manager: Error inserting into outbox - ' . $wpdb->last_error);
                 continue; // Saltar este destinatario si no se pudo registrar
             }
             $outbox_id = $wpdb->insert_id;
-            
+
+            // Preparar debug por destinatario
+            $smtp_debug = array();
+            $smtp_debug['timestamp'] = current_time('mysql');
+            $smtp_debug['to'] = $recipient['email'];
+            $smtp_debug['subject'] = $subject;
+            $smtp_debug['smtp_config'] = $this->check_smtp_configuration();
+
+            // Reiniciar último error conocido
+            $this->last_mail_error = null;
+
             // Enviar email
-            $sent = wp_mail($recipient['email'], $subject, $content, $headers);
-            
-            // Actualizar estado en bandeja de salida
+            // Detect pre_wp_mail short-circuit before attempting send
+            $mail_atts = array('to' => $recipient['email'], 'subject' => $subject, 'message' => $content, 'headers' => $headers);
+            $pre_wp = apply_filters('pre_wp_mail', null, $mail_atts);
+            if ($pre_wp !== null) {
+                $smtp_debug['pre_wp_mail'] = $pre_wp;
+                $sent = false;
+                // Capture a descriptive error
+                $error_message = 'pre_wp_mail short-circuited sending (value: ' . var_export($pre_wp, true) . ')';
+            } else {
+                // Attach temporary wp_mail_failed listener to capture PHPMailer errors
+                add_action('wp_mail_failed', array($this, 'capture_mail_error'));
+                $sent = wp_mail($recipient['email'], $subject, $content, $headers);
+                // Detach listener
+                remove_action('wp_mail_failed', array($this, 'capture_mail_error'));
+            }
+
+            // Build a useful error message
+            if ($sent) {
+                $error_message = null;
+            } else {
+                if (empty($error_message)) {
+                    $error_message = $this->last_mail_error ? $this->last_mail_error : 'wp_mail returned false - check SMTP configuration';
+                }
+            }
+
+            // Actualizar estado en bandeja de salida, persistir smtp_debug
             $status = $sent ? 'sent' : 'failed';
             $wpdb->update(
                 $outbox_table,
                 array(
                     'status' => $status,
                     'sent_at' => $sent ? current_time('mysql') : null,
-                    'error_message' => $sent ? null : 'Mass email failed to send'
+                    'error_message' => $error_message,
+                    'smtp_debug' => json_encode($smtp_debug)
                 ),
                 array('id' => $outbox_id)
             );
-            
+
             // Log del envío (mantener sistema existente)
             $log_status = $sent ? 'sent' : 'failed';
             $wpdb->insert(
@@ -1176,10 +1220,10 @@ class QvaClick_Admin_Email_Manager {
                     'status' => $log_status,
                     'tracking_id' => $tracking_id,
                     'outbox_id' => $outbox_id, // Vincular con bandeja de salida
-                    'error_message' => $sent ? null : 'Failed to send'
+                    'error_message' => $error_message
                 )
             );
-            
+
             if ($sent) {
                 $sent_count++;
 
@@ -1208,12 +1252,23 @@ class QvaClick_Admin_Email_Manager {
             }
         }
         
-        // Actualizar estadísticas finales
+        // Actualizar estadísticas finales. Determinar estado final según resultados
+        if ($failed_count === 0 && $sent_count > 0) {
+            $final_status = 'sent';
+            $sent_at = current_time('mysql');
+        } elseif ($sent_count === 0) {
+            $final_status = 'failed';
+            $sent_at = null;
+        } else {
+            $final_status = 'partial';
+            $sent_at = current_time('mysql');
+        }
+
         $wpdb->update(
             $table,
             array(
-                'status' => 'sent',
-                'sent_at' => current_time('mysql'),
+                'status' => $final_status,
+                'sent_at' => $sent_at,
                 'sent_count' => $sent_count,
                 'failed_count' => $failed_count
             ),

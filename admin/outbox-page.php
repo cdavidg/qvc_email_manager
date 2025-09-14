@@ -240,7 +240,8 @@ class QvaClick_Outbox_Admin_Page {
         <script>
         function viewEmailDetails(emailId) {
             // Abrir modal o ventana con detalles del email
-            var url = '<?php echo admin_url("admin-ajax.php"); ?>?action=qvc_view_email_details&email_id=' + emailId;
+            var nonce = '<?php echo wp_create_nonce('qvc_view_email_details'); ?>';
+            var url = '<?php echo admin_url("admin-ajax.php"); ?>?action=qvc_view_email_details&email_id=' + emailId + '&nonce=' + nonce;
             window.open(url, 'EmailDetails', 'width=800,height=600,scrollbars=yes');
         }
         
