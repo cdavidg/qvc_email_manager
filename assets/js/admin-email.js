@@ -63,6 +63,16 @@
         $(document).on('click', '.qvc-send-campaign', handleSendCampaign);
         $(document).on('click', '.qvc-edit-campaign', handleEditCampaign);
 
+        // Ver email desde bandeja de salida (pestaña)
+        $(document).on('click', '.qvc-view-email', function(e) {
+            e.preventDefault();
+            const id = $(this).data('id');
+            if (!id) return;
+            const nonce = (window.adminEmail && window.adminEmail.viewNonce) ? window.adminEmail.viewNonce : '';
+            const url = `${adminEmail.ajaxurl}?action=qvc_view_email_details&email_id=${id}${nonce ? `&nonce=${nonce}` : ''}`;
+            window.open(url, 'EmailDetails', 'width=800,height=600,scrollbars=yes');
+        });
+
         // Auto-save para borradores
         if ($('#content').length) {
             setInterval(autoSaveDraft, 30000); // Auto-save cada 30 segundos

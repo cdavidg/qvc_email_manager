@@ -3,7 +3,7 @@
  * Plugin Name: QvaClick Email Manager V1
  * Plugin URI: https://qvaclick.com/
  * Description: QvaClick Email Manager V1 es un plugin avanzado para la gestión de correos electrónicos en WordPress, diseñado para integrarse con el Tema Exertio y el plugin Exertio Framework. Ofrece funcionalidades como creación y gestión de plantillas de correo, envío masivo de campañas, sistema de tickets de soporte, integración con formularios de contacto, manejo de correos IMAP, configuración personalizada de SMTP, y un sistema de notificaciones. Incluye herramientas avanzadas como sincronización con Redux, tracking de emails, analytics, y soporte para eventos personalizados mediante hooks. Ideal para automatizar y optimizar la comunicación por correo electrónico en proyectos complejos.
- * Version: 3.2.2
+ * Version: 3.2.3
  * Author: David Guerra | @cedav95 | QvaClick Team
  * License: GPL v2 or later
  * Text Domain: qvaclick-email-manager
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('QVC_EMAIL_MANAGER_VERSION', '3.2.2');
+define('QVC_EMAIL_MANAGER_VERSION', '3.2.3');
 define('QVC_EMAIL_MANAGER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('QVC_EMAIL_MANAGER_PLUGIN_URL', plugin_dir_url(__FILE__));
 
@@ -313,11 +313,6 @@ class QvaClick_Email_Manager {
             QvaClick_Notification_System::create_notifications_table();
         }
         
-        // Legacy database setup
-        if (class_exists('QvaClick_Admin_Email_Manager')) {
-            QvaClick_Admin_Email_Manager::create_tables();
-        }
-        
         // Initialize default options
         $this->init_default_options();
         
@@ -477,6 +472,8 @@ class QvaClick_Email_Manager {
         add_action('wp_ajax_qvc_email_preview_template', array($this, 'ajax_preview_template'));
         add_action('wp_ajax_qvc_email_preview_individual_template', array($this, 'ajax_preview_individual_template'));
         add_action('wp_ajax_qvc_email_preview_specific_template', array($this, 'ajax_preview_specific_template'));
+    // Outbox: view email details in a popup window
+    add_action('wp_ajax_qvc_view_email_details', array($this, 'ajax_view_email_details'));
     add_action('wp_ajax_qvc_email_send_test', array($this, 'ajax_send_test_email'));
     add_action('wp_ajax_qvc_email_export_templates', array($this, 'ajax_export_templates'));
     // Hook emails: preview, test send, apply base
@@ -492,7 +489,8 @@ class QvaClick_Email_Manager {
     if (class_exists('QvaClick_Framework_Interceptor')) {
         QvaClick_Framework_Interceptor::get_instance();
     }
-    add_action('wp_ajax_qvc_email_import_templates', array($this, 'ajax_import_templates'));
+
+    // (métodos de la clase continúan debajo)
 
     // Admin Email AJAX handlers
     add_action('wp_ajax_qvc_load_recipient_preview', array($this, 'ajax_load_recipient_preview'));
@@ -754,6 +752,7 @@ class QvaClick_Email_Manager {
             wp_localize_script('qvc-admin-email-js', 'adminEmail', array(
                 'nonce' => wp_create_nonce('qvc_admin_email_nonce'),
                 'ajaxurl' => admin_url('admin-ajax.php'),
+                'viewNonce' => wp_create_nonce('qvc_view_email_details'),
                 'messages' => array(
                     'confirmDelete' => __('¿Estás seguro de que quieres eliminar este elemento?', 'qvaclick-email-manager'),
                     'confirmDuplicate' => __('¿Estás seguro de que quieres duplicar esta campaña?', 'qvaclick-email-manager'),
@@ -790,6 +789,68 @@ class QvaClick_Email_Manager {
     
     public function templates_list_page() {
         QvaClick_Email_Admin_Interface::render_templates_list_page();
+    }
+
+    /**
+     * AJAX: Mostrar detalles de un email de la bandeja de salida (qvc_email_outbox)
+     * Abre una ventana simple con el contenido del email.
+     */
+    public function ajax_view_email_details() {
+        if (!current_user_can('qvc_manage_emails') && !current_user_can('manage_options')) {
+            wp_die(__('Permisos insuficientes', 'qvaclick-email-manager'));
+        }
+
+        // Nonce opcional (pasado por GET normalmente desde outbox-page)
+        if (isset($_REQUEST['nonce']) && !wp_verify_nonce(sanitize_text_field($_REQUEST['nonce']), 'qvc_view_email_details')) {
+            wp_die(__('Nonce inválido', 'qvaclick-email-manager'));
+        }
+
+        global $wpdb;
+        $email_id = isset($_REQUEST['email_id']) ? intval($_REQUEST['email_id']) : 0;
+        if (!$email_id) {
+            wp_die(__('ID de email inválido', 'qvaclick-email-manager'));
+        }
+
+        $table = $wpdb->prefix . 'qvc_email_outbox';
+        $email = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE id = %d", $email_id), ARRAY_A);
+        if (!$email) {
+            wp_die(__('Email no encontrado', 'qvaclick-email-manager'));
+        }
+
+        // Preparar salida HTML simple
+        nocache_headers();
+        header('Content-Type: text/html; charset=' . get_option('blog_charset'));
+
+        $subject = isset($email['subject']) ? $email['subject'] : '';
+        $recipient = isset($email['recipient_email']) ? $email['recipient_email'] : '';
+        $recipient_name = isset($email['recipient_name']) ? $email['recipient_name'] : '';
+        $sender_email = isset($email['sender_email']) ? $email['sender_email'] : get_option('admin_email');
+        $sender_name = isset($email['sender_name']) ? $email['sender_name'] : get_bloginfo('name');
+        $status = isset($email['status']) ? $email['status'] : '';
+        $created_at = isset($email['created_at']) ? $email['created_at'] : '';
+        $sent_at = isset($email['sent_at']) ? $email['sent_at'] : '';
+        $content = isset($email['content']) ? $email['content'] : '';
+
+        echo '<!DOCTYPE html><html><head><meta charset="' . esc_attr(get_option('blog_charset')) . '">';
+        echo '<title>' . esc_html(sprintf(__('Email #%d - %s', 'qvaclick-email-manager'), $email_id, $subject)) . '</title>';
+        echo '<style>body{font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Helvetica, Arial, sans-serif; margin:20px;} .meta{background:#f6f7f7;border:1px solid #ccd0d4;padding:12px;border-radius:4px;margin-bottom:16px} .meta div{margin:4px 0} .label{color:#555;font-weight:600;min-width:140px;display:inline-block} .content{border:1px solid #ccd0d4;border-radius:4px;padding:12px;min-height:200px;background:#fff} .status{display:inline-block;padding:2px 6px;border-radius:3px;font-size:12px;background:#eee;margin-left:6px} .status.sent{background:#46b450;color:#fff} .status.failed{background:#dc3232;color:#fff} .status.pending{background:#ffb900;color:#fff}</style>';
+        echo '</head><body>';
+        echo '<h2>' . esc_html($subject) . ' <span class="status ' . esc_attr($status) . '">' . esc_html($status) . '</span></h2>';
+        echo '<div class="meta">';
+        echo '<div><span class="label">' . esc_html__('De', 'qvaclick-email-manager') . ':</span> ' . esc_html($sender_name) . ' &lt;' . esc_html($sender_email) . '&gt;</div>';
+        echo '<div><span class="label">' . esc_html__('Para', 'qvaclick-email-manager') . ':</span> ' . esc_html($recipient_name) . ' ' . (!empty($recipient_name) ? '(' : '') . esc_html($recipient) . (!empty($recipient_name) ? ')' : '') . '</div>';
+        if (!empty($created_at)) {
+            echo '<div><span class="label">' . esc_html__('Creado', 'qvaclick-email-manager') . ':</span> ' . esc_html(date_i18n('d/m/Y H:i', strtotime($created_at))) . '</div>';
+        }
+        if (!empty($sent_at)) {
+            echo '<div><span class="label">' . esc_html__('Enviado', 'qvaclick-email-manager') . ':</span> ' . esc_html(date_i18n('d/m/Y H:i', strtotime($sent_at))) . '</div>';
+        }
+        echo '</div>';
+
+        // Mostrar contenido del email (permitiendo HTML seguro)
+        echo '<div class="content">' . wp_kses_post($content) . '</div>';
+        echo '</body></html>';
+        wp_die();
     }
     
     /**
