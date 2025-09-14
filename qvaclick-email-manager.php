@@ -10,6 +10,7 @@
  * Requires at least: 5.8
  * Tested up to: 6.3
  * Requires PHP: 7.4
+ * Update URI: https://github.com/cdavidg/qvc_email_manager
  */
 
 // Prevent direct access
@@ -71,6 +72,10 @@ class QvaClick_Email_Manager {
         // Hook de activación del plugin
         register_activation_hook(__FILE__, array($this, 'plugin_activation'));
         add_action('plugins_loaded', array($this, 'init'));
+        // Registrar actualizaciones desde GitHub en admin
+        if (is_admin()) {
+            add_action('admin_init', array($this, 'init_github_updater'));
+        }
     }
     
     public function init() {
@@ -91,6 +96,22 @@ class QvaClick_Email_Manager {
         }
         $this->ensure_caps();
         $this->setup_hooks();
+    }
+
+    /**
+     * Inicializa el updater de GitHub para ofrecer actualizaciones automáticas.
+     */
+    public function init_github_updater() {
+        require_once QVC_EMAIL_MANAGER_PLUGIN_DIR . 'includes/class-github-updater.php';
+        $plugin_basename = plugin_basename(__FILE__);
+        $updater = new QVC_GitHub_Updater(array(
+            'owner' => 'cdavidg',
+            'repo'  => 'qvc_email_manager',
+            'plugin_basename' => $plugin_basename,
+            'plugin_dirname'  => dirname($plugin_basename),
+            'current_version' => QVC_EMAIL_MANAGER_VERSION,
+        ));
+        $updater->init();
     }
     
     private function ensure_caps() {
