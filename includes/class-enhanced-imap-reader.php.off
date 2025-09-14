@@ -1,0 +1,962 @@
+<?php
+/**
+ * Enhanced IMAP Email Reader with Security and Classification
+ * 
+ * @package QvaClick_Email_Manager
+ */
+
+// Prevent direct access
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class QvaClick_Enhanced_IMAP_Reader {
+    
+    private $connection;
+    private $config;
+    private $security_scanner;
+    private $classifier;
+    
+    public function __construct() {
+        $this->config = get_option('qvc_imap_config', array());
+        
+        // Mapear campos de configuración para compatibilidad
+        if (isset($this->config['imap_host'])) {
+            $this->config['server'] = $this->config['imap_host'];
+        }
+        if (isset($this->config['imap_port'])) {
+            $this->config['port'] = $this->config['imap_port'];
+        }
+        if (isset($this->config['imap_username'])) {
+            $this->config['username'] = $this->config['imap_username'];
+        }
+        if (isset($this->config['imap_password'])) {
+            $this->config['password'] = $this->config['imap_password'];
+        }
+        if (isset($this->config['imap_encryption'])) {
+            $this->config['encryption'] = $this->config['imap_encryption'];
+        }
+        
+        $this->init_components();
+    }
+    
+    /**
+     * Initialize security and classification components
+     */
+    private function init_components() {
+        if (file_exists(plugin_dir_path(__FILE__) . 'class-email-security-scanner.php')) {
+            require_once plugin_dir_path(__FILE__) . 'class-email-security-scanner.php';
+            $this->security_scanner = new QvaClick_Email_Security_Scanner();
+        }
+        
+        if (file_exists(plugin_dir_path(__FILE__) . 'class-email-classifier.php')) {
+            require_once plugin_dir_path(__FILE__) . 'class-email-classifier.php';
+            $this->classifier = new QvaClick_Email_Classifier();
+        }
+    }
+    
+    /**
+     * Process new emails from IMAP with enhanced security and classification
+     */
+    public function process_new_emails() {
+        if (!isset($this->config['enabled']) || !$this->config['enabled']) {
+            error_log('QvaClick Debug: IMAP is disabled');
+            return array('success' => false, 'message' => 'IMAP disabled');
+        }
+        
+        if (!$this->connect()) {
+            error_log('QvaClick Debug: Failed to connect to IMAP server');
+            return array('success' => false, 'message' => 'Connection failed');
+        }
+        
+        $results = array(
+            'processed' => 0,
+            'errors' => 0,
+            'quarantined' => 0,
+            'tickets_created' => 0,
+            'leads_created' => 0,
+            'general_stored' => 0,
+            'spam_blocked' => 0
+        );
+        
+        try {
+            // Get unread emails
+            $emails = $this->get_unread_emails();
+            
+            foreach ($emails as $email_num) {
+                $email_data = $this->get_email_data($email_num);
+                
+                if (!$email_data) {
+                    $results['errors']++;
+                    continue;
+                }
+                
+                // 1. SECURITY SCAN
+                $security_result = $this->security_scanner ? 
+                    $this->security_scanner->scan_email($email_data) : 
+                    array('is_safe' => true, 'quarantine' => false);
+                
+                // Handle quarantined emails
+                if ($security_result['quarantine']) {
+                    $this->quarantine_email($email_data, $security_result);
+                    $this->mark_as_read($email_num);
+                    $results['quarantined']++;
+                    continue;
+                }
+                
+                // 2. CHECK FOR EXISTING TICKET FIRST (PRIORITY CHECK)
+                $existing_ticket = $this->find_existing_ticket($email_data);
+                
+                if ($existing_ticket) {
+                    // Si es respuesta a ticket existente, procesarlo como ticket independientemente de clasificación
+                    $result = $this->add_ticket_message($existing_ticket['id'], $email_data);
+                    if ($result) {
+                        $results['processed']++;
+                        $results['tickets_updated']++;
+                        $this->mark_as_read($email_num);
+                        continue;
+                    } else {
+                        $results['errors']++;
+                        continue;
+                    }
+                }
+                
+                // 3. CLASSIFICATION (solo si no es respuesta a ticket)
+                $classification = $this->classifier ? 
+                    $this->classifier->classify_email($email_data) : 
+                    array('category' => 'general_inquiries', 'confidence' => 50);
+                
+                // 4. PROCESS BASED ON CLASSIFICATION
+                $process_result = $this->process_classified_email($email_data, $classification, $security_result);
+                
+                if ($process_result['success']) {
+                    $results['processed']++;
+                    $results[$process_result['type']]++;
+                    $this->mark_as_read($email_num);
+                } else {
+                    $results['errors']++;
+                }
+            }
+            
+        } catch (Exception $e) {
+            error_log('QvaClick Debug: IMAP processing error: ' . $e->getMessage());
+            $results['errors']++;
+        } finally {
+            $this->disconnect();
+        }
+        
+        return array('success' => true, 'results' => $results);
+    }
+    
+    /**
+     * Connect to IMAP server
+     */
+    private function connect() {
+        if (!function_exists('imap_open')) {
+            error_log('QvaClick Debug: IMAP extension not available');
+            return false;
+        }
+        
+        // Determinar el tipo de encriptación basado en puerto y configuración
+        $port = $this->config['port'] ?? 993;
+        $encryption = $this->config['encryption'] ?? '';
+        
+        // Mapeo correcto de puertos y encriptación
+        if ($port == 993) {
+            // Puerto 993 siempre es SSL
+            $encryption_flag = '/ssl';
+        } elseif ($port == 143) {
+            // Puerto 143 puede ser TLS (STARTTLS) o sin encriptación
+            $encryption_flag = ($encryption === 'tls') ? '/tls' : '';
+        } else {
+            // Otros puertos: usar la configuración especificada
+            switch ($encryption) {
+                case 'ssl':
+                    $encryption_flag = '/ssl';
+                    break;
+                case 'tls':
+                    $encryption_flag = '/tls';
+                    break;
+                default:
+                    $encryption_flag = '';
+                    break;
+            }
+        }
+        
+        $server = sprintf('{%s:%s/imap%s}INBOX', 
+            $this->config['server'] ?? '', 
+            $port,
+            $encryption_flag
+        );
+        
+        error_log("QvaClick Debug: Attempting IMAP connection to: {$server}");
+        
+        $this->connection = imap_open(
+            $server,
+            $this->config['username'] ?? '',
+            $this->config['password'] ?? ''
+        );
+        
+        if (!$this->connection) {
+            error_log('QvaClick Debug: IMAP connection failed: ' . imap_last_error());
+            return false;
+        }
+        
+        error_log('QvaClick Debug: IMAP connection successful');
+        return true;
+    }
+    
+    /**
+     * Disconnect from IMAP server
+     */
+    private function disconnect() {
+        if ($this->connection) {
+            imap_close($this->connection);
+            $this->connection = null;
+        }
+    }
+    
+    /**
+     * Get unread emails
+     */
+    private function get_unread_emails() {
+        $emails = imap_search($this->connection, 'UNSEEN');
+        return $emails ? $emails : array();
+    }
+    
+    /**
+     * Get complete email data
+     */
+    private function get_email_data($email_num) {
+        try {
+            $header = imap_headerinfo($this->connection, $email_num);
+            $body = $this->get_email_body($email_num);
+            $attachments = $this->get_email_attachments($email_num);
+            
+            $from_email = '';
+            if (isset($header->from[0])) {
+                $from_email = $header->from[0]->mailbox . '@' . $header->from[0]->host;
+            }
+            
+            return array(
+                'from' => $from_email,
+                'subject' => isset($header->subject) ? $header->subject : '',
+                'body' => $body,
+                'date' => isset($header->date) ? $header->date : '',
+                'attachments' => $attachments,
+                'message_id' => isset($header->message_id) ? $header->message_id : '',
+                'in_reply_to' => isset($header->in_reply_to) ? $header->in_reply_to : ''
+            );
+        } catch (Exception $e) {
+            error_log('QvaClick Debug: Error getting email data: ' . $e->getMessage());
+            return false;
+        }
+    }
+    
+    /**
+     * Get email body
+     */
+    private function get_email_body($email_num) {
+        $body = imap_fetchbody($this->connection, $email_num, 1);
+        
+        if (empty($body)) {
+            $body = imap_body($this->connection, $email_num);
+        }
+        
+        // Decode if needed
+        $encoding = imap_fetchstructure($this->connection, $email_num);
+        if (isset($encoding->encoding)) {
+            switch ($encoding->encoding) {
+                case 3: // BASE64
+                    $body = base64_decode($body);
+                    break;
+                case 4: // QUOTED-PRINTABLE
+                    $body = quoted_printable_decode($body);
+                    break;
+            }
+        }
+        
+        return $body;
+    }
+    
+    /**
+     * Get email attachments
+     */
+    private function get_email_attachments($email_num) {
+        $attachments = array();
+        
+        try {
+            $structure = imap_fetchstructure($this->connection, $email_num);
+            
+            if (isset($structure->parts)) {
+                foreach ($structure->parts as $part_num => $part) {
+                    if (isset($part->disposition) && strtolower($part->disposition) === 'attachment') {
+                        $filename = '';
+                        
+                        if (isset($part->dparameters)) {
+                            foreach ($part->dparameters as $param) {
+                                if (strtolower($param->attribute) === 'filename') {
+                                    $filename = $param->value;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        $attachments[] = array(
+                            'filename' => $filename,
+                            'size' => isset($part->bytes) ? $part->bytes : 0,
+                            'type' => isset($part->subtype) ? $part->subtype : 'unknown'
+                        );
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log('QvaClick Debug: Error getting attachments: ' . $e->getMessage());
+        }
+        
+        return $attachments;
+    }
+    
+    /**
+     * Mark email as read
+     */
+    private function mark_as_read($email_num) {
+        imap_setflag_full($this->connection, $email_num, "\\Seen");
+    }
+    
+    /**
+     * Quarantine suspicious email
+     */
+    private function quarantine_email($email_data, $security_result) {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . 'qvc_email_quarantine';
+        
+        $result = $wpdb->insert(
+            $table,
+            array(
+                'sender_email' => $email_data['from'],
+                'subject' => $email_data['subject'],
+                'body' => $email_data['body'],
+                'security_score' => $security_result['security_score'] ?? 0,
+                'threats_detected' => json_encode($security_result['threats_detected'] ?? array()),
+                'quarantine_reason' => implode(', ', $security_result['threats_detected'] ?? array()),
+                'status' => 'quarantined',
+                'created_at' => current_time('mysql')
+            ),
+            array('%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s')
+        );
+        
+        if ($result) {
+            error_log("QvaClick Security: Email quarantined from {$email_data['from']}");
+        }
+    }
+    
+    /**
+     * Process classified email
+     */
+    private function process_classified_email($email_data, $classification, $security_result) {
+        try {
+            switch ($classification['category']) {
+                case 'support_tickets':
+                    $result = $this->create_support_ticket($email_data, $classification);
+                    return array('success' => $result !== false, 'type' => 'tickets_created');
+                    
+                case 'sales_inquiries':
+                    $result = $this->create_sales_lead($email_data, $classification);
+                    return array('success' => $result !== false, 'type' => 'leads_created');
+                    
+                case 'spam':
+                    $this->handle_spam_email($email_data, $classification);
+                    return array('success' => true, 'type' => 'spam_blocked');
+                    
+                default:
+                    $result = $this->store_in_general_inbox($email_data, $classification);
+                    return array('success' => $result !== false, 'type' => 'general_stored');
+            }
+        } catch (Exception $e) {
+            error_log('QvaClick Debug: Error processing classified email: ' . $e->getMessage());
+            return array('success' => false, 'type' => 'error');
+        }
+    }
+    
+    /**
+     * Create support ticket
+     */
+    private function create_support_ticket($email_data, $classification) {
+        global $wpdb;
+        
+        // Ya verificamos tickets existentes antes, esto es para crear uno nuevo
+        // Limpiar el cuerpo del email para extraer solo el contenido nuevo
+        $clean_message = $this->extract_new_reply_content($email_data['body']);
+        
+        // Create new ticket
+        $ticket_data = array(
+            'user_email' => $email_data['from'],
+            'subject' => $email_data['subject'],
+            'message' => $clean_message,  // Usar mensaje limpio en lugar del original
+            'status' => 'open',
+            'priority' => $classification['priority'] ?? 'medium',
+            'source' => 'email_imap',
+            'created_at' => current_time('mysql')
+        );
+        
+        if (!empty($classification['assigned_to'])) {
+            $ticket_data['assigned_to'] = $classification['assigned_to'];
+        }
+        
+        $table = $wpdb->prefix . 'qvc_support_tickets';
+        $result = $wpdb->insert($table, $ticket_data);
+        
+        if ($result) {
+            $ticket_id = $wpdb->insert_id;
+            $this->execute_suggested_actions($classification['suggested_actions'] ?? array(), $ticket_id, $email_data);
+            
+            // Notificar nuevo ticket creado
+            if (class_exists('QvaClick_Notification_System')) {
+                QvaClick_Notification_System::notify_new_ticket($ticket_id, $email_data['from'], $email_data['subject']);
+            }
+            
+            return $ticket_id;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Find existing ticket for email thread
+     */
+    private function find_existing_ticket($email_data) {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . 'qvc_support_tickets';
+        
+        // Múltiples patrones para detectar IDs de ticket en diferentes formatos
+        $ticket_patterns = array(
+            '/Re:.*?\[Ticket #(TKT-[A-Z0-9]+)\]\s*●/i',        // Re: test [Ticket #TKT-7NHVRAAK] ●
+            '/\[Ticket #(TKT-[A-Z0-9]+)\]\s*●/i',              // [Ticket #TKT-7NHVRAAK] ●
+            '/\[Ticket #(TKT-[A-Z0-9]+)\]/i',                  // [Ticket #TKT-7NHVRAAK]
+            '/Ticket #(TKT-[A-Z0-9]+)/i',                      // Ticket #TKT-7NHVRAAK
+            '/\[(TKT-[A-Z0-9]+)\]/i',                          // [TKT-7NHVRAAK]
+            '/(TKT-[A-Z0-9]+)/i',                              // TKT-7NHVRAAK (sin prefijos)
+            '/Re:.*\[Ticket #(TKT-[A-Z0-9]+)\]/i',            // Re: test [Ticket #TKT-7NHVRAAK]
+            '/\[?Ticket #(\d+)\]?/i'                           // Ticket #123 (numérico)
+        );
+        
+        foreach ($ticket_patterns as $pattern) {
+            if (preg_match($pattern, $email_data['subject'], $matches)) {
+                $ticket_id = $matches[1];
+                
+                // Buscar por ticket_id o por ID numérico
+                $ticket = $wpdb->get_row($wpdb->prepare(
+                    "SELECT * FROM {$table} WHERE (ticket_id = %s OR id = %s) AND user_email = %s",
+                    $ticket_id,
+                    is_numeric($ticket_id) ? intval($ticket_id) : 0,
+                    $email_data['from']
+                ), ARRAY_A);
+                
+                if ($ticket) {
+                    error_log("QvaClick Debug: Ticket encontrado con patrón '$pattern' - ID: {$ticket_id}");
+                    return $ticket;
+                }
+            }
+        }
+        
+        // Look for recent tickets from same email
+        $recent_ticket = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$table} 
+             WHERE user_email = %s 
+             AND status IN ('open', 'pending') 
+             AND created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)
+             ORDER BY created_at DESC 
+             LIMIT 1",
+            $email_data['from']
+        ), ARRAY_A);
+        
+        return $recent_ticket;
+    }
+    
+    /**
+     * Add message to existing ticket
+     */
+    private function add_ticket_message($ticket_id, $email_data) {
+        global $wpdb;
+        
+        $messages_table = $wpdb->prefix . 'qvc_ticket_messages';
+        
+        // Limpiar el cuerpo del email para extraer solo la respuesta nueva
+        $clean_message = $this->extract_new_reply_content($email_data['body']);
+        
+        $result = $wpdb->insert(
+            $messages_table,
+            array(
+                'ticket_id' => $ticket_id,
+                'user_email' => $email_data['from'],
+                'message' => $clean_message,
+                'is_admin' => 0,
+                'created_at' => current_time('mysql')
+            ),
+            array('%d', '%s', '%s', '%d', '%s')
+        );
+        
+        if ($result) {
+            // Update ticket status
+            $wpdb->update(
+                $wpdb->prefix . 'qvc_support_tickets',
+                array('status' => 'open', 'updated_at' => current_time('mysql')),
+                array('id' => $ticket_id),
+                array('%s', '%s'),
+                array('%d')
+            );
+            
+            // Notificar ticket actualizado
+            if (class_exists('QvaClick_Notification_System')) {
+                QvaClick_Notification_System::notify_ticket_updated($ticket_id, $email_data['from'], $email_data['subject']);
+            }
+            
+            error_log("QvaClick Debug: Mensaje agregado al ticket $ticket_id - Contenido: " . substr($clean_message, 0, 100) . "...");
+        }
+        
+        return $result;
+    }
+    
+    /**
+     * Extract only the new reply content from email body
+     * Remove quoted text and previous email chains
+     */
+    private function extract_new_reply_content($body) {
+        // Decodificar caracteres especiales como =C3=B3, =E2=80=AF, etc.
+        $clean_body = $this->decode_quoted_printable_body($body);
+        
+        // Patrones más específicos para detectar inicio de mensajes anteriores
+        $reply_indicators = array(
+            // Formato Gmail en español con encoded chars
+            '/El\s+(lun|mar|mié|jue|vie|sáb|dom|monday|tuesday|wednesday|thursday|friday|saturday|sunday),?\s+\d+\s+(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic|\w+)\s+\d{4}.*?escribió:/ius',
+            // Formato Gmail en inglés
+            '/On\s+(Mon|Tue|Wed|Thu|Fri|Sat|Sun|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s+\w+\s+\d+,?\s+\d{4}.*?wrote:/iu',
+            // Separadores de email originales
+            '/-----Original Message-----/i',
+            '/________________________________/i',
+            // Headers de email
+            '/^(From|De|Para|To|Subject|Asunto|Date|Fecha|Sent|Enviado):\s+/im',
+            // Líneas que empiezan con > (citado)
+            '/^>/m'
+        );
+        
+        // Buscar el primer indicador de mensaje anterior
+        $cut_position = strlen($clean_body);
+        
+        foreach ($reply_indicators as $pattern) {
+            if (preg_match($pattern, $clean_body, $matches, PREG_OFFSET_CAPTURE)) {
+                $found_position = $matches[0][1];
+                if ($found_position < $cut_position) {
+                    $cut_position = $found_position;
+                }
+            }
+        }
+        
+        // Cortar el mensaje en la posición encontrada
+        if ($cut_position < strlen($clean_body)) {
+            $clean_body = substr($clean_body, 0, $cut_position);
+        }
+        
+        // Procesar línea por línea para remover texto citado adicional
+        $lines = explode("\n", $clean_body);
+        $new_lines = array();
+        $skip_empty_start = true;
+        
+        foreach ($lines as $line) {
+            $trimmed_line = trim($line);
+            
+            // Saltar líneas vacías al inicio
+            if ($skip_empty_start && empty($trimmed_line)) {
+                continue;
+            }
+            $skip_empty_start = false;
+            
+            // Detener si encontramos patrones de respuesta anterior
+            if (preg_match('/^(>|>>|>>>|\||From:|De:|Para:|To:|El\s+.+escribió:|On\s+.+wrote:)/i', $trimmed_line)) {
+                break;
+            }
+            
+            // Evitar líneas que parecen signatures o footers automáticos
+            if (preg_match('/(©|copyright|\[image:|--\s*$|Visita nuestro|¿Necesitas ayuda\?)/i', $trimmed_line)) {
+                break;
+            }
+            
+            $new_lines[] = $line;
+        }
+        
+        // Unir las líneas y limpiar espacios extra
+        $extracted_content = trim(implode("\n", $new_lines));
+        
+        // Remover líneas vacías al final
+        $extracted_content = rtrim($extracted_content);
+        
+        // Si el contenido extraído está vacío o muy corto, usar un fragmento del original
+        if (empty($extracted_content) || strlen($extracted_content) < 10) {
+            $first_lines = array_slice(explode("\n", $body), 0, 5);
+            $extracted_content = trim(implode("\n", $first_lines));
+            if (strlen($extracted_content) > 200) {
+                $extracted_content = substr($extracted_content, 0, 200) . '...';
+            }
+        }
+        
+        return $extracted_content;
+    }
+    
+    /**
+     * Decode quoted-printable encoded body content
+     */
+    private function decode_quoted_printable_body($body) {
+        // Decodificar quoted-printable (=XX formato)
+        $decoded = quoted_printable_decode($body);
+        
+        // Si no cambió mucho, intentar decodificación manual de patrones comunes
+        if (strlen($decoded) === strlen($body)) {
+            $patterns = array(
+                '/=C3=B3/' => 'ó',
+                '/=C3=AD/' => 'í',
+                '/=C3=A9/' => 'é',
+                '/=C3=A1/' => 'á',
+                '/=C3=BA/' => 'ú',
+                '/=C3=B1/' => 'ñ',
+                '/=E2=80=AF/' => ' ',
+                '/=E2=80=94/' => '—',
+                '/=C2=A1/' => '¡',
+                '/=C2=BF/' => '¿',
+                '/=C2=A9/' => '©'
+            );
+            
+            foreach ($patterns as $encoded => $decoded_char) {
+                $body = preg_replace($encoded, $decoded_char, $body);
+            }
+            
+            return $body;
+        }
+        
+        return $decoded;
+    }
+    
+    /**
+     * Create sales lead
+     */
+    private function create_sales_lead($email_data, $classification) {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . 'qvc_sales_leads';
+        
+        // Limpiar el cuerpo del email para extraer solo el contenido nuevo
+        $clean_message = $this->extract_new_reply_content($email_data['body']);
+        
+        $lead_data = array(
+            'email' => $email_data['from'],
+            'subject' => $email_data['subject'],
+            'message' => $clean_message,  // Usar mensaje limpio
+            'status' => 'new',
+            'priority' => $classification['priority'] ?? 'medium',
+            'source' => 'email_imap',
+            'created_at' => current_time('mysql')
+        );
+        
+        if (!empty($classification['assigned_to'])) {
+            $lead_data['assigned_to'] = $classification['assigned_to'];
+        }
+        
+        $result = $wpdb->insert($table, $lead_data);
+        
+        if ($result) {
+            $lead_id = $wpdb->insert_id;
+            $this->execute_suggested_actions($classification['suggested_actions'] ?? array(), $lead_id, $email_data);
+            return $lead_id;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Store in general inbox
+     */
+    private function store_in_general_inbox($email_data, $classification) {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . 'qvc_general_inbox';
+        
+        // Limpiar el cuerpo del email para extraer solo el contenido nuevo
+        $clean_message = $this->extract_new_reply_content($email_data['body']);
+        
+        $inbox_data = array(
+            'sender_email' => $email_data['from'],
+            'subject' => $email_data['subject'],
+            'body' => $clean_message,  // Usar mensaje limpio
+            'category' => $classification['category'],
+            'priority' => $classification['priority'] ?? 'medium',
+            'confidence' => $classification['confidence'] ?? 50,
+            'tags' => json_encode($classification['tags'] ?? array()),
+            'status' => 'unread',
+            'requires_action' => !empty($classification['requires_human']) ? 1 : 0,
+            'created_at' => current_time('mysql')
+        );
+        
+        if (!empty($classification['assigned_to'])) {
+            $inbox_data['assigned_to'] = $classification['assigned_to'];
+            $inbox_data['status'] = 'assigned';
+        }
+        
+        $result = $wpdb->insert($table, $inbox_data);
+        
+        if ($result) {
+            $inbox_id = $wpdb->insert_id;
+            $this->execute_suggested_actions($classification['suggested_actions'] ?? array(), $inbox_id, $email_data);
+            
+            // Notificar nuevo email en bandeja general
+            if (class_exists('QvaClick_Notification_System')) {
+                QvaClick_Notification_System::notify_new_email($inbox_id, $email_data['from'], $email_data['subject']);
+            }
+            
+            return $inbox_id;
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Handle spam email
+     */
+    private function handle_spam_email($email_data, $classification) {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . 'qvc_spam_log';
+        
+        $wpdb->insert(
+            $table,
+            array(
+                'sender_email' => $email_data['from'],
+                'subject' => $email_data['subject'],
+                'detected_at' => current_time('mysql'),
+                'confidence' => $classification['confidence'] ?? 0
+            ),
+            array('%s', '%s', '%s', '%d')
+        );
+        
+        // Update spam filters
+        $this->update_spam_filters($email_data);
+    }
+    
+    /**
+     * Execute suggested actions
+     */
+    private function execute_suggested_actions($actions, $item_id, $email_data) {
+        foreach ($actions as $action) {
+            switch ($action) {
+                case 'send_auto_acknowledgment':
+                    $this->send_auto_acknowledgment($email_data, $item_id);
+                    break;
+                    
+                case 'send_sales_template':
+                    $this->send_sales_template($email_data);
+                    break;
+                    
+                case 'send_general_template':
+                    $this->send_general_template($email_data);
+                    break;
+                    
+                case 'notify_manager':
+                    $this->notify_manager($email_data, $item_id);
+                    break;
+                    
+                case 'notify_sales_team':
+                    $this->notify_sales_team($email_data, $item_id);
+                    break;
+            }
+        }
+    }
+    
+    /**
+     * Send auto acknowledgment
+     */
+    private function send_auto_acknowledgment($email_data, $ticket_id) {
+        $template = get_option('qvc_auto_acknowledgment_template', 
+            'Gracias por contactarnos. Su consulta ha sido recibida (Ticket #' . $ticket_id . ') y será atendida a la brevedad.');
+        
+        $this->send_template_email($email_data['from'], 'Consulta recibida - Ticket #' . $ticket_id, $template);
+    }
+    
+    /**
+     * Send template email
+     */
+    private function send_template_email($to, $subject, $message) {
+        $headers = array(
+            'Content-Type: text/html; charset=UTF-8',
+            'From: QvaClick Support <soporte@qvaclick.com>'
+        );
+        
+        return wp_mail($to, $subject, $message, $headers);
+    }
+    
+    /**
+     * Update spam filters based on detected spam
+     */
+    private function update_spam_filters($email_data) {
+        // Auto-learn from spam patterns
+        $blacklist = get_option('qvc_email_blacklist', array());
+        $sender_domain = substr(strrchr($email_data['from'], "@"), 1);
+        
+        if (!in_array($sender_domain, $blacklist)) {
+            $blacklist[] = $sender_domain;
+            update_option('qvc_email_blacklist', $blacklist);
+        }
+    }
+    
+    /**
+     * Send sales template
+     */
+    private function send_sales_template($email_data) {
+        $template = get_option('qvc_sales_template', 
+            'Gracias por su interés en nuestros servicios. Un miembro de nuestro equipo de ventas se pondrá en contacto con usted pronto.');
+        
+        $this->send_template_email($email_data['from'], 'Gracias por su consulta comercial', $template);
+    }
+    
+    /**
+     * Send general template
+     */
+    private function send_general_template($email_data) {
+        $template = get_option('qvc_general_template', 
+            'Gracias por contactarnos. Hemos recibido su mensaje y le responderemos a la brevedad.');
+        
+        $this->send_template_email($email_data['from'], 'Mensaje recibido', $template);
+    }
+    
+    /**
+     * Notify manager
+     */
+    private function notify_manager($email_data, $item_id) {
+        $manager_email = get_option('qvc_manager_email', get_option('admin_email'));
+        
+        $subject = 'Consulta urgente recibida - ID: ' . $item_id;
+        $message = "Se ha recibido una consulta marcada como urgente:\n\n";
+        $message .= "De: " . $email_data['from'] . "\n";
+        $message .= "Asunto: " . $email_data['subject'] . "\n";
+        $message .= "Mensaje: " . substr($email_data['body'], 0, 200) . "...\n";
+        
+        $this->send_template_email($manager_email, $subject, $message);
+    }
+    
+    /**
+     * Notify sales team
+     */
+    private function notify_sales_team($email_data, $item_id) {
+        $sales_email = get_option('qvc_sales_email', 'ventas@qvaclick.com');
+        
+        $subject = 'Nuevo lead de ventas - ID: ' . $item_id;
+        $message = "Se ha recibido un nuevo lead de ventas:\n\n";
+        $message .= "De: " . $email_data['from'] . "\n";
+        $message .= "Asunto: " . $email_data['subject'] . "\n";
+        $message .= "Mensaje: " . substr($email_data['body'], 0, 200) . "...\n";
+        
+        $this->send_template_email($sales_email, $subject, $message);
+    }
+    
+    /**
+     * Create all necessary database tables
+     */
+    public static function create_enhanced_tables() {
+        global $wpdb;
+        
+        $charset_collate = $wpdb->get_charset_collate();
+        
+        // Quarantine table
+        $quarantine_table = $wpdb->prefix . 'qvc_email_quarantine';
+        $sql1 = "CREATE TABLE IF NOT EXISTS $quarantine_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            sender_email varchar(255) NOT NULL,
+            subject text,
+            body longtext,
+            security_score tinyint(3) NOT NULL,
+            threats_detected text,
+            quarantine_reason text,
+            status varchar(20) NOT NULL DEFAULT 'quarantined',
+            reviewed_by bigint(20) NULL,
+            reviewed_at datetime NULL,
+            created_at datetime NOT NULL,
+            PRIMARY KEY (id),
+            KEY sender_email (sender_email),
+            KEY status (status),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+        
+        // General inbox table
+        $general_inbox_table = $wpdb->prefix . 'qvc_general_inbox';
+        $sql2 = "CREATE TABLE IF NOT EXISTS $general_inbox_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            sender_email varchar(255) NOT NULL,
+            subject text,
+            body longtext,
+            category varchar(50) NOT NULL,
+            priority varchar(20) NOT NULL DEFAULT 'medium',
+            confidence tinyint(3) NOT NULL,
+            tags text,
+            status varchar(20) NOT NULL DEFAULT 'unread',
+            assigned_to bigint(20) NULL,
+            requires_action tinyint(1) NOT NULL DEFAULT 0,
+            read_at datetime NULL,
+            processed_at datetime NULL,
+            created_at datetime NOT NULL,
+            PRIMARY KEY (id),
+            KEY sender_email (sender_email),
+            KEY category (category),
+            KEY status (status),
+            KEY priority (priority),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+        
+        // Sales leads table
+        $sales_leads_table = $wpdb->prefix . 'qvc_sales_leads';
+        $sql3 = "CREATE TABLE IF NOT EXISTS $sales_leads_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            email varchar(255) NOT NULL,
+            subject text,
+            message longtext,
+            status varchar(20) NOT NULL DEFAULT 'new',
+            priority varchar(20) NOT NULL DEFAULT 'medium',
+            assigned_to bigint(20) NULL,
+            source varchar(50) NOT NULL DEFAULT 'email',
+            created_at datetime NOT NULL,
+            PRIMARY KEY (id),
+            KEY email (email),
+            KEY status (status),
+            KEY assigned_to (assigned_to),
+            KEY created_at (created_at)
+        ) $charset_collate;";
+        
+        // Spam log table
+        $spam_log_table = $wpdb->prefix . 'qvc_spam_log';
+        $sql4 = "CREATE TABLE IF NOT EXISTS $spam_log_table (
+            id bigint(20) NOT NULL AUTO_INCREMENT,
+            sender_email varchar(255) NOT NULL,
+            subject text,
+            detected_at datetime NOT NULL,
+            confidence tinyint(3) NOT NULL,
+            PRIMARY KEY (id),
+            KEY sender_email (sender_email),
+            KEY detected_at (detected_at)
+        ) $charset_collate;";
+        
+        require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+        dbDelta($sql1);
+        dbDelta($sql2);
+        dbDelta($sql3);
+        dbDelta($sql4);
+        
+        // Create security and classification tables
+        if (class_exists('QvaClick_Email_Security_Scanner')) {
+            QvaClick_Email_Security_Scanner::create_security_table();
+        }
+        
+        if (class_exists('QvaClick_Email_Classifier')) {
+            QvaClick_Email_Classifier::create_classification_table();
+        }
+    }
+}
+?>

@@ -1,0 +1,1229 @@
+/**
+ * Admin Email Styles
+ * Estilos específicos para el sistema de Admin Email
+ */
+
+/* Layout principal */
+.qvc-admin-email-wrap {
+    margin: 20px 0;
+}
+
+.qvc-admin-email-content {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+/* Admin Email: KPI/layout fixes */
+.qvc-admin-email-content {
+    padding: 20px; /* give inner breathing room so titles and content aren't flush to the left */
+}
+
+.qvc-admin-email-content .qvc-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    justify-items: stretch; /* ensure cards expand to fill their grid cell */
+    align-items: stretch;
+}
+
+.qvc-admin-email-content .qvc-stat-card {
+    margin: 0; /* remove potential left offsets */
+}
+
+/* Ensure the section title and left edge have consistent spacing */
+.qvc-admin-email-wrap > h1,
+.qvc-admin-email-wrap .qvc-inbox-header h2 {
+    margin-left: 0;
+}
+
+/* Badge para tickets no leídos */
+.qvc-unread-badge {
+    background: #d63638;
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 11px;
+    margin-left: 5px;
+    font-weight: normal;
+}
+
+/* Alinear badge a la derecha dentro de la pestaña */
+.nav-tab { position: relative; padding-right: 26px; }
+.nav-tab .qvc-unread-badge,
+.nav-tab .qvc-quarantine-badge {
+    position: absolute;
+    right: 6px;
+    top: 6px;
+}
+
+/* Lista de tickets */
+.qvc-tickets-list {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.qvc-ticket-row {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e5e5e5;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    background: #fff;
+}
+
+.qvc-ticket-row:hover {
+    /* Blue-ish hover state: neutral rows become highlighted on hover */
+    background-color: #e3f2fd; /* light blue */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+
+/* Status classes: use border accent and typographic weight, but avoid changing
+   the entire row background so hover behaviour is consistent. */
+.qvc-ticket-row.new {
+    border-left: 4px solid #ffc107;
+    font-weight: 600;
+}
+.qvc-ticket-row.open {
+    border-left: 4px solid #2196f3;
+}
+.qvc-ticket-row.in_progress {
+    border-left: 4px solid #ff9800;
+}
+.qvc-ticket-row.on_hold {
+    border-left: 4px solid #9c27b0;
+}
+.qvc-ticket-row.resolved {
+    border-left: 4px solid #4caf50;
+}
+.qvc-ticket-row.closed {
+    border-left: 4px solid #f44336;
+    opacity: 0.8;
+}
+
+/* Legacy unread class for backwards compatibility: only accent, not full bg */
+.qvc-ticket-priority {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    margin-right: 15px;
+    flex-shrink: 0;
+}
+
+.qvc-ticket-row.unread {
+    border-left: 4px solid #ffc107;
+    font-weight: 600;
+}
+
+.qvc-ticket-priority.low { 
+    background-color: #6c757d; 
+}
+
+.qvc-ticket-priority.normal { 
+    background-color: #28a745; 
+}
+
+.qvc-ticket-priority.high { 
+    background-color: #dc3545; 
+}
+
+.qvc-ticket-priority.urgent { 
+    background-color: #fd7e14;
+    animation: pulse-urgent 2s infinite;
+}
+
+@keyframes pulse-urgent {
+    0% { box-shadow: 0 0 0 0 rgba(253, 126, 20, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(253, 126, 20, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(253, 126, 20, 0); }
+}
+
+/* Información del ticket */
+.qvc-ticket-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.qvc-ticket-subject {
+    font-size: 14px;
+    margin: 0 0 6px 0;
+    line-height: 1.4;
+    color: #2271b1;
+    font-weight: 600;
+}
+
+.qvc-ticket-meta {
+    font-size: 12px;
+    color: #646970;
+    line-height: 1.3;
+}
+
+.qvc-ticket-meta strong {
+    color: #1d2327;
+}
+
+/* Acciones del ticket */
+.qvc-ticket-actions {
+    margin-left: 15px;
+    flex-shrink: 0;
+}
+
+/* Badges de estado - mejorados */
+.qvc-status-badge {
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border: 1px solid transparent;
+}
+
+.qvc-status-badge.new { 
+    background-color: #ffc107; 
+    color: #000;
+    border-color: #ffb300;
+}
+
+.qvc-status-badge.open { 
+    background-color: #2196f3; 
+    color: #fff; 
+    border-color: #1976d2;
+}
+
+.qvc-status-badge.in_progress { 
+    background-color: #ff9800; 
+    color: #fff; 
+    border-color: #f57c00;
+}
+
+.qvc-status-badge.on_hold { 
+    background-color: #9c27b0; 
+    color: #fff; 
+    border-color: #7b1fa2;
+}
+
+.qvc-status-badge.resolved { 
+    background-color: #4caf50; 
+    color: #fff; 
+    border-color: #388e3c;
+}
+
+.qvc-status-badge.closed { 
+    background-color: #f44336; 
+    color: #fff; 
+    border-color: #d32f2f;
+}
+
+/* Priority badges - mejorados */
+.qvc-priority-badge {
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.qvc-priority-badge.low { 
+    background-color: #e0e0e0; 
+    color: #666; 
+}
+
+.qvc-priority-badge.normal { 
+    background-color: #4caf50; 
+    color: #fff; 
+}
+
+.qvc-priority-badge.high { 
+    background-color: #ff9800; 
+    color: #fff; 
+}
+
+.qvc-priority-badge.urgent { 
+    background-color: #f44336;
+    color: #fff;
+    animation: pulse-urgent 2s infinite;
+}
+
+/* Detalle del ticket */
+.qvc-ticket-detail {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.qvc-ticket-header {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.qvc-ticket-header h2 {
+    margin: 0 0 15px 0;
+    color: #1d2327;
+}
+
+/* Improve spacing between section titles and their containers */
+.qvc-ticket-header h2,
+.qvc-reply-form h3,
+.qvc-quick-status-change h3,
+.qvc-inbox-header h2,
+.qvc-form-row label,
+.qvc-filters label {
+    margin-bottom: 12px;
+}
+
+.qvc-ticket-row .qvc-ticket-info .qvc-ticket-subject {
+    margin-bottom: 10px;
+}
+
+/* Ensure message thread headers and messages have consistent vertical spacing */
+.qvc-message-thread,
+.qvc-message {
+    margin-top: 22px;
+    margin-bottom: 22px;
+}
+
+.qvc-ticket-info p {
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+.qvc-ticket-info strong {
+    display: inline-block;
+    min-width: 80px;
+    color: #1d2327;
+}
+
+.qvc-ticket-actions {
+    margin-top: 15px;
+}
+
+/* Hilo de mensajes */
+.qvc-message-thread {
+    margin: 20px 0;
+}
+
+.qvc-message {
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #007cba;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    position: relative;
+}
+
+.qvc-message.admin-reply {
+    background-color: #f0f6fc;
+    border-left-color: #28a745;
+    margin-left: 40px;
+}
+
+.qvc-message.admin-reply::before {
+    content: "👨‍💼";
+    position: absolute;
+    left: -20px;
+    top: 20px;
+    background: #f0f6fc;
+    padding: 5px;
+    border-radius: 50%;
+    border: 1px solid #28a745;
+}
+
+.qvc-message.user-message {
+    background-color: #fdfdfd;
+    border-left-color: #007cba;
+}
+
+.qvc-message.user-message::before {
+    content: "👤";
+    position: absolute;
+    left: -20px;
+    top: 20px;
+    background: #fdfdfd;
+    padding: 5px;
+    border-radius: 50%;
+    border: 1px solid #007cba;
+}
+
+.qvc-message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.qvc-message-author {
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.qvc-admin-badge {
+    background: #28a745;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    margin-left: 8px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.qvc-message-date {
+    font-size: 12px;
+    color: #646970;
+}
+
+.qvc-message-content {
+    line-height: 1.6;
+    color: #1d2327;
+}
+
+.qvc-message-content p {
+    margin: 0 0 12px 0;
+}
+
+.qvc-message-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Formulario de respuesta */
+.qvc-reply-form {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.qvc-reply-form h3 {
+    margin: 0 0 15px 0;
+    color: #1d2327;
+    border-bottom: 2px solid #f0f0f1;
+    padding-bottom: 10px;
+}
+
+/* Cambio rápido de estado */
+.qvc-quick-status-change {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 25px;
+}
+
+.qvc-quick-status-change h3 {
+    margin: 0 0 15px 0;
+    font-size: 14px;
+    color: #555;
+    border: none;
+    padding: 0;
+}
+
+/* Formulario de email masivo */
+.qvc-mass-email-form {
+    max-width: 800px;
+    background: white;
+    padding: 25px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    margin: 20px 0;
+}
+
+.qvc-form-row {
+    margin-bottom: 20px;
+}
+
+.qvc-form-row label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.qvc-form-row input,
+.qvc-form-row select,
+.qvc-form-row textarea {
+    width: 100%;
+    max-width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.qvc-form-row input:focus,
+.qvc-form-row select:focus,
+.qvc-form-row textarea:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: 2px solid transparent;
+}
+
+.qvc-form-row .description {
+    font-size: 12px;
+    color: #646970;
+    margin-top: 5px;
+    line-height: 1.4;
+}
+
+.qvc-form-row small {
+    display: block;
+    margin-top: 5px;
+    font-style: italic;
+    color: #666;
+}
+
+.qvc-form-actions {
+    padding-top: 20px;
+    border-top: 1px solid #f0f0f1;
+}
+
+/* Preview de destinatarios */
+.qvc-recipient-preview {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 10px;
+    font-size: 13px;
+    border-left: 4px solid #2271b1;
+}
+
+.qvc-recipient-preview ul {
+    margin: 10px 0 0 0;
+    padding-left: 20px;
+}
+
+.qvc-recipient-preview li {
+    margin: 3px 0;
+    color: #646970;
+}
+
+/* Tabla de campañas */
+.qvc-campaigns-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    background: #fff;
+}
+
+.qvc-campaigns-table th,
+.qvc-campaigns-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #e0e0e0;
+    vertical-align: top;
+}
+
+.qvc-campaigns-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #1d2327;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.qvc-campaigns-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.qvc-campaigns-table .button {
+    margin: 2px;
+    font-size: 12px;
+    padding: 4px 8px;
+    height: auto;
+    line-height: 1.2;
+}
+
+/* Filtros */
+.qvc-filters {
+    background: #f8f9fa;
+    padding: 15px;
+    border: 1px solid #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.qvc-filters form {
+    display: flex;
+    gap: 10px;
+    align-items: end;
+    flex-wrap: wrap;
+}
+
+.qvc-filters select {
+    min-width: 150px;
+    padding: 6px 10px;
+    border: 1px solid #8c8f94;
+    border-radius: 4px;
+    background: white;
+}
+
+.qvc-filters .button {
+    padding: 6px 12px;
+    height: auto;
+    line-height: 1.2;
+}
+
+/* Inbox header */
+.qvc-inbox-header {
+    margin-bottom: 20px;
+}
+
+.qvc-inbox-header h2 {
+    margin: 0 0 15px 0;
+    color: #1d2327;
+}
+
+/* Estado sin tickets */
+.qvc-no-tickets {
+    text-align: center;
+    padding: 40px 20px;
+    color: #646970;
+}
+
+.qvc-no-tickets p {
+    font-size: 16px;
+    margin: 0;
+}
+
+/* Acciones del formulario */
+.qvc-form-actions {
+    padding-top: 15px;
+    border-top: 1px solid #e0e0e0;
+    display: flex;
+    gap: 10px;
+}
+
+/* Configuración */
+.qvc-settings-page {
+    max-width: 800px;
+}
+
+.qvc-settings-form .form-table {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+}
+
+.qvc-settings-form .form-table th {
+    width: 200px;
+    padding: 15px 10px 15px 0;
+    vertical-align: top;
+}
+
+.qvc-settings-form .form-table td {
+    padding: 15px 0;
+}
+
+/* Paginación */
+.qvc-pagination {
+    text-align: center;
+    padding: 20px;
+    border-top: 1px solid #e0e0e0;
+    background: #f8f9fa;
+}
+
+.qvc-pagination .page-numbers {
+    display: inline-block;
+    padding: 6px 12px;
+    margin: 0 2px;
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #2271b1;
+    text-decoration: none;
+    border-radius: 3px;
+}
+
+.qvc-pagination .page-numbers:hover,
+.qvc-pagination .page-numbers.current {
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .qvc-ticket-row {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 15px;
+    }
+    
+    .qvc-ticket-priority {
+        margin: 0 0 10px 0;
+    }
+    
+    .qvc-ticket-actions {
+        margin: 10px 0 0 0;
+        width: 100%;
+    }
+    
+    .qvc-message.admin-reply {
+        margin-left: 0;
+    }
+    
+    .qvc-filters form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .qvc-filters select {
+        min-width: auto;
+        width: 100%;
+    }
+}
+
+/* Animaciones de carga */
+.qvc-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.qvc-loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #2271b1;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Estados de campañas */
+.qvc-status-sent {
+    background: #46b450;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.qvc-status-draft {
+    background: #72777c;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.qvc-status-sending {
+    background: #00a0d2;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Botones de campaña */
+.qvc-view-campaign {
+    background: #0073aa !important;
+    color: white !important;
+    border-color: #0073aa !important;
+}
+
+.qvc-duplicate-campaign {
+    background: #00a0d2 !important;
+    color: white !important;
+    border-color: #00a0d2 !important;
+}
+
+.qvc-delete-campaign {
+    background: #dc3232 !important;
+    color: white !important;
+    border-color: #dc3232 !important;
+}
+
+.qvc-view-campaign:hover,
+.qvc-duplicate-campaign:hover,
+.qvc-delete-campaign:hover {
+    opacity: 0.8;
+}
+
+/* Notificaciones */
+#admin-email-notifications {
+    margin: 10px 0;
+}
+
+/* Resultados de búsqueda mejorados */
+.qvc-loading-search,
+.qvc-no-results,
+.qvc-error {
+    padding: 8px;
+    text-align: center;
+    font-style: italic;
+    color: #666;
+}
+
+.qvc-error {
+    color: #dc3232;
+    background: #ffeaea;
+    border: 1px solid #dc3232;
+    border-radius: 3px;
+}
+
+/* Estilos para gestión de campañas - versión sobria */
+
+/* Tabla de campañas */
+.qvc-campaigns-table {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.qvc-campaigns-table .wp-list-table {
+    border: none;
+}
+
+.qvc-campaigns-table .wp-list-table th {
+    background: #f1f1f1;
+    border-bottom: 1px solid #ccd0d4;
+    font-weight: 600;
+}
+
+.qvc-campaigns-table .wp-list-table td {
+    border-bottom: 1px solid #ddd;
+    vertical-align: middle;
+}
+
+/* Badges de estado */
+.qvc-status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.qvc-status-badge.qvc-status-draft {
+    background: #f0f0f1;
+    color: #555;
+    border: 1px solid #ccd0d4;
+}
+
+.qvc-status-badge.qvc-status-sending {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.qvc-status-badge.qvc-status-sent {
+    background: #d1edff;
+    color: #0073aa;
+    border: 1px solid #a7d3ff;
+}
+
+.qvc-status-badge.qvc-status-failed {
+    background: #ffeaea;
+    color: #dc3232;
+    border: 1px solid #ff9999;
+}
+
+.qvc-status-badge.qvc-status-deleted {
+    background: #f0f0f1;
+    color: #666;
+    border: 1px solid #ccd0d4;
+}
+
+/* Botones de acción para campañas */
+.qvc-campaign-actions {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.qvc-campaign-actions .button {
+    padding: 2px 8px;
+    font-size: 11px;
+    height: auto;
+    line-height: 1.4;
+    border-radius: 3px;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.qvc-campaign-actions .button-primary {
+    background: #0073aa;
+    border-color: #0073aa;
+    color: #fff;
+}
+
+.qvc-campaign-actions .button-primary:hover {
+    background: #005a87;
+    border-color: #005a87;
+}
+
+.qvc-campaign-actions .button-secondary {
+    background: #f1f1f1;
+    border-color: #ccd0d4;
+    color: #555;
+}
+
+.qvc-campaign-actions .button-secondary:hover {
+    background: #e0e0e0;
+    border-color: #999;
+}
+
+.qvc-campaign-actions .button-delete {
+    background: #dc3232;
+    border-color: #dc3232;
+    color: #fff;
+}
+
+.qvc-campaign-actions .button-delete:hover {
+    background: #a00;
+    border-color: #a00;
+}
+
+/* Estilos para detalles de campaña */
+.qvc-campaign-details {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.qvc-campaign-info {
+    margin-bottom: 20px;
+}
+
+.qvc-campaign-info .form-table th {
+    width: 200px;
+    font-weight: 600;
+    color: #23282d;
+    padding: 15px 10px 15px 0;
+}
+
+.qvc-campaign-info .form-table td {
+    padding: 15px 10px;
+}
+
+.qvc-campaign-content {
+    margin-bottom: 20px;
+}
+
+.qvc-campaign-content h3 {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.qvc-campaign-logs {
+    margin-top: 20px;
+}
+
+.qvc-campaign-logs h3 {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.qvc-campaign-logs .wp-list-table {
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+}
+
+.qvc-campaign-logs .wp-list-table th {
+    background: #f1f1f1;
+    font-weight: 600;
+}
+
+/* Mensajes vacíos */
+.qvc-empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+}
+
+.qvc-empty-state .dashicons {
+    font-size: 48px;
+    margin-bottom: 15px;
+    color: #ccd0d4;
+}
+
+.qvc-empty-state h3 {
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.qvc-empty-state p {
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+/* Responsividad */
+@media (max-width: 768px) {
+    .qvc-campaign-actions {
+        flex-direction: column;
+    }
+    
+    .qvc-campaign-actions .button {
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 5px;
+    }
+    
+    .qvc-campaigns-nav .nav-tab {
+        display: block;
+        width: 100%;
+        margin-bottom: 5px;
+        text-align: center;
+    }
+}
+
+/* === MEJORAS DE HILO DE MENSAJES === */
+
+/* Contenedor principal del hilo */
+.qvc-message-thread {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.qvc-message-thread h3 {
+    margin: 0 0 20px 0;
+    color: #1d2327;
+    border-bottom: 2px solid #f0f0f1;
+    padding-bottom: 10px;
+    font-size: 18px;
+}
+
+/* Redefinir mensaje individual para mejor diseño */
+.qvc-message {
+    border: 1px solid #e5e5e5;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    padding: 15px;
+    position: relative;
+    background: #fafafa;
+    border-left: 4px solid #ddd;
+}
+
+.qvc-message.user-message {
+    border-left: 4px solid #2196f3;
+    background: #f8fbff;
+}
+
+.qvc-message.admin-reply {
+    border-left: 4px solid #4caf50;
+    background: #f8fff8;
+}
+
+.qvc-message.latest-message {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-color: #ffc107;
+}
+
+/* Quitar iconos/emojis del before */
+.qvc-message.admin-reply::before,
+.qvc-message.user-message::before {
+    display: none;
+}
+
+/* Header del mensaje rediseñado */
+.qvc-message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid #e5e5e5;
+    padding-bottom: 8px;
+}
+
+.qvc-message-author-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.qvc-message-author {
+    font-weight: 600;
+    color: #1d2327;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+
+.qvc-message-email {
+    font-weight: normal;
+    color: #646970;
+    font-size: 12px;
+    display: block;
+}
+
+/* Badges mejorados */
+.qvc-message-badges {
+    display: flex;
+    gap: 5px;
+    margin-top: 5px;
+    flex-wrap: wrap;
+}
+
+.qvc-admin-badge {
+    background: #4caf50;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-left: 0;
+}
+
+.qvc-email-badge {
+    background: #2196f3;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.qvc-original-badge {
+    background: #9e9e9e;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.qvc-latest-badge {
+    background: #ffc107;
+    color: #000;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+}
+
+/* Meta información del lado derecho */
+.qvc-message-meta {
+    text-align: right;
+    color: #646970;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+.qvc-message-date {
+    display: block;
+    margin-bottom: 2px;
+}
+
+.qvc-message-date .relative-time {
+    color: #999;
+    font-style: italic;
+}
+
+.qvc-message-number {
+    font-weight: 600;
+    color: #2271b1;
+}
+
+/* Contenido del mensaje */
+.qvc-message-content {
+    line-height: 1.6;
+    color: #1d2327;
+    margin: 0;
+}
+
+.qvc-message-content p {
+    margin: 0 0 10px 0;
+}
+
+.qvc-message-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Footer del mensaje */
+.qvc-message-footer {
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.qvc-email-info {
+    color: #666;
+    font-style: italic;
+    font-size: 12px;
+}
+
+/* Resumen de conversación */
+.qvc-conversation-summary {
+    background: #f0f6fc;
+    border: 1px solid #d0d7de;
+    border-radius: 6px;
+    padding: 12px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.qvc-conversation-summary p {
+    margin: 0;
+    color: #656d76;
+    font-size: 14px;
+}
+
+/* Sin mensajes */
+.qvc-no-messages {
+    text-align: center;
+    padding: 40px 20px;
+    color: #646970;
+}
+
+.qvc-no-messages p {
+    margin: 0;
+    font-style: italic;
+}
+
+/* Responsive para mensajes */
+@media (max-width: 768px) {
+    .qvc-message-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .qvc-message-meta {
+        text-align: left;
+        margin-top: 10px;
+    }
+    
+    .qvc-message-badges {
+        margin-top: 8px;
+    }
+}

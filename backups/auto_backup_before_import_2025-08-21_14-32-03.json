@@ -1,0 +1,882 @@
+{
+    "fl_new_user_admin": {
+        "base_key": "fl_new_user_admin",
+        "name": "Fl New User Admin",
+        "subject_key": "fl_new_user_admin_sub",
+        "subject": "Nuevo registro de usuario en %site_name%",
+        "body_key": "fl_new_user_admin_email_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_sendto_Admin_account_activation": {
+        "base_key": "fl_email_sendto_Admin_account_activation",
+        "name": "Fl Email Sendto Admin Account Activation",
+        "subject_key": "fl_email_sendto_Admin_account_activation_subj",
+        "subject": "Nueva cuenta de usuario registrada",
+        "body_key": "fl_email_sendto_Admin_account_activation_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 10px\">Nuevo usuario registrado<\/h1>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Un nuevo usuario se ha registrado en tu sitio.<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\"><strong>Enlace al perfil:<\/strong> <a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"%profile_link%\" target=\"_blank\" rel=\"noopener\">Ver perfil del usuario<\/a><\/p>",
+        "switch_key": "fl_email_sendto_Admin_account_activation",
+        "enabled": true,
+        "placeholders": [
+            "%profile_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_new_user_welcome": {
+        "base_key": "fl_new_user_welcome",
+        "name": "Fl New User Welcome",
+        "subject_key": "fl_new_user_welcome_sub",
+        "subject": "Estamos muy contentos de tenerte con nosotros",
+        "body_key": "fl_new_user_welcome_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_user_email_account_activate": {
+        "base_key": "fl_user_email_account_activate",
+        "name": "Fl User Email Account Activate",
+        "subject_key": "fl_user_email_account_activate_sub",
+        "subject": "Tu cuenta ha sido activada en %site_name%",
+        "body_key": "fl_user_email_account_activate_message",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 10px\">¡Hola %display_name%!<\/h1>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Tu cuenta en <strong>%site_name%<\/strong> ha sido activada por el equipo de administración.<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Ahora puedes acceder y comenzar a publicar o contratar servicios, gestionar tu perfil y explorar oportunidades.<\/p>\n<a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"%login_url%\">Acceder a mi cuenta<\/a>",
+        "switch_key": "fl_user_email_account_activate",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%",
+            "%login_url%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_user_email_account_deactivate": {
+        "base_key": "fl_user_email_account_deactivate",
+        "name": "Fl User Email Account Deactivate",
+        "subject_key": "fl_user_email_account_deactivate_sub",
+        "subject": "️ Cuenta de usuario desactivada en %site_name%",
+        "body_key": "fl_user_email_account_deactivate_message",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 10px\">Cuenta de usuario desactivada<\/h1>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Se ha enviado esta notificación porque la cuenta de un usuario fue desactivada en <strong>%site_name%<\/strong>.<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\"><strong>Nombre de usuario:<\/strong> %display_name%<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\"><strong>Correo electrónico:<\/strong> %email%<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\"><strong>Motivo de desactivación:<\/strong> %deactivation_reason%<\/p>\n<a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"%site_url%\">Abrir panel de administración<\/a>",
+        "switch_key": "fl_user_email_account_deactivate",
+        "enabled": true,
+        "placeholders": [
+            "%site_name%",
+            "%display_name%",
+            "%email%",
+            "%deactivation_reason%",
+            "%site_url%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_admin_email_account_activate": {
+        "base_key": "fl_admin_email_account_activate",
+        "name": "Fl Admin Email Account Activate",
+        "subject_key": "fl_admin_email_account_activate_sub",
+        "subject": "Se activó la cuenta de un usuario en %site_name%",
+        "body_key": "fl_admin_email_account_activate_message",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 10px\">Cuenta activada<\/h1>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Se ha activado la cuenta de un usuario en <strong>%site_name%<\/strong>.<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\"><strong>Nombre de usuario:<\/strong> %display_name%<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\"><strong>Correo electrónico:<\/strong> %email%<\/p>\n<a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"%site_url%\">Abrir panel de administración<\/a>",
+        "switch_key": "fl_admin_email_account_activate",
+        "enabled": true,
+        "placeholders": [
+            "%site_name%",
+            "%display_name%",
+            "%email%",
+            "%site_url%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_user_email_verification": {
+        "base_key": "fl_user_email_verification",
+        "name": "Fl User Email Verification",
+        "subject_key": "fl_user_email_verification_sub",
+        "subject": "Confirma tu correo para activar tu cuenta en %site_name%",
+        "body_key": "fl_user_email_verification_message",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 10px\">¡Hola, %display_name%!<\/h1>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Gracias por registrarte en <strong>%site_name%<\/strong>. Solo falta un paso para activar tu cuenta.<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Por favor, verifica tu dirección de correo electrónico haciendo clic en el botón:<\/p>\n<a style=\"background-color: #5aadff;color: #fff;padding: 12px 24px;border-radius: 4px;text-decoration: none;font-weight: bold\" href=\"%verification_link%\">Verificar mi cuenta<\/a>\n<p style=\"font-size: 16px;margin: 0 0 16px\">¿El botón no funciona? Copia y pega este enlace en tu navegador:<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\">%verification_link%<\/p>",
+        "switch_key": "fl_user_email_verification",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%",
+            "%verification_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_allow_user_email_verification": {
+        "base_key": "fl_allow_user_email_verification",
+        "name": "Fl Allow User Email Verification",
+        "subject_key": "fl_allow_user_email_verification_sub",
+        "subject": "Confirma tu correo para activar tu cuenta en %site_name%",
+        "body_key": "fl_allow_user_email_verification_message",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 10px\">¡Hola, %display_name%!<\/h1>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Para completar la creación de tu cuenta, verifica tu correo electrónico haciendo clic en el botón:<\/p>\n<a style=\"background-color: #5aadff;color: #fff;padding: 12px 24px;border-radius: 4px;text-decoration: none;font-weight: bold\" href=\"%verification_link_allow%\">Verificar mi cuenta<\/a>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Si el botón no funciona, copia y pega este enlace en tu navegador:<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\">%verification_link_allow%<\/p>",
+        "switch_key": "fl_allow_user_email_verification",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%verification_link_allow%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_user_reset": {
+        "base_key": "fl_user_reset",
+        "name": "Fl User Reset",
+        "subject_key": "fl_user_reset_sub",
+        "subject": "Restablecer tu contraseña en %site_name%",
+        "body_key": "fl_user_reset_message",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 10px\">Hola %display_name%,<\/h1>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Recibimos tu solicitud para restablecer la contraseña de tu cuenta en <strong>%site_name%<\/strong>.<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Para continuar, haz clic en el botón:<\/p>\n<a style=\"background-color: #5aadff;color: #fff;padding: 12px 24px;border-radius: 4px;text-decoration: none;font-weight: bold\" href=\"%reset_link%\">Restablecer contraseña<\/a>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Si el botón no funciona, copia y pega este enlace en tu navegador:<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\">%reset_link%<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Te recomendamos mantener tu contraseña segura y no compartirla con nadie.<\/p>",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%",
+            "%reset_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_project_invitation": {
+        "base_key": "fl_project_invitation",
+        "name": "Fl Project Invitation",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_project_invitation_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_project_invitation_accepted": {
+        "base_key": "fl_project_invitation_accepted",
+        "name": "Fl Project Invitation Accepted",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_project_invitation_accepted_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_project_invitation_cancel": {
+        "base_key": "fl_project_invitation_cancel",
+        "name": "Fl Project Invitation Cancel",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_project_invitation_cancel_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_emp_addon_created": {
+        "base_key": "fl_emp_addon_created",
+        "name": "Fl Emp Addon Created",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_emp_addon_created_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_onproject_created": {
+        "base_key": "fl_email_onproject_created",
+        "name": "Fl Email Onproject Created",
+        "subject_key": "fl_email_onproject_created_sub",
+        "subject": "📢 Tu proyecto ha sido publicado en %site_name%",
+        "body_key": "fl_email_onproject_created_email_body",
+        "body": "",
+        "switch_key": "fl_email_onproject_created",
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_onproject_update": {
+        "base_key": "fl_email_onproject_update",
+        "name": "Fl Email Onproject Update",
+        "subject_key": "fl_email_onproject_update_sub",
+        "subject": "✏️ Tu proyecto ha sido actualizado en %site_name%",
+        "body_key": "fl_email_onproject_update_email_body",
+        "body": "",
+        "switch_key": "fl_email_onproject_update",
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_on_project_rejected": {
+        "base_key": "fl_on_project_rejected",
+        "name": "Fl On Project Rejected",
+        "subject_key": "fl_on_project_rejected_sub",
+        "subject": "️ Tu proyecto fue rechazado: %project_title%",
+        "body_key": "fl_on_project_rejected_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 10px\">Proyecto rechazado<\/h1>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Lamentamos informarte que tu proyecto fue rechazado en <strong>%site_name%<\/strong>.<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\"><strong>Proyecto:<\/strong> <a style=\"color: #3cbeb2;text-decoration: none\" href=\"%project_link%\" target=\"_blank\" rel=\"noopener\">%project_title%<\/a><\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\"><strong>Motivo:<\/strong> %rejection_reason%<\/p>",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [
+            "%site_name%",
+            "%project_link%",
+            "%project_title%",
+            "%rejection_reason%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_freelancer_assign_project": {
+        "base_key": "fl_freelancer_assign_project",
+        "name": "Fl Freelancer Assign Project",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_freelancer_assign_project_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_emp_assign_project": {
+        "base_key": "fl_emp_assign_project",
+        "name": "Fl Emp Assign Project",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_emp_assign_project_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_freelancer_complete_project": {
+        "base_key": "fl_freelancer_complete_project",
+        "name": "Fl Freelancer Complete Project",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_freelancer_complete_project_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_emp_complete_project": {
+        "base_key": "fl_emp_complete_project",
+        "name": "Fl Emp Complete Project",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_emp_complete_project_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_freelancer_cancel_project": {
+        "base_key": "fl_freelancer_cancel_project",
+        "name": "Fl Freelancer Cancel Project",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_freelancer_cancel_project_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_onproject_pending_toadmin": {
+        "base_key": "fl_email_onproject_pending_toadmin",
+        "name": "Fl Email Onproject Pending Toadmin",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_email_onproject_pending_toadmin_email_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_emp_cancel_project": {
+        "base_key": "fl_emp_cancel_project",
+        "name": "Fl Emp Cancel Project",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_emp_cancel_project_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_project_proposal": {
+        "base_key": "fl_project_proposal",
+        "name": "Fl Project Proposal",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_project_proposal_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_zoom_meet": {
+        "base_key": "fl_email_zoom_meet",
+        "name": "Fl Email Zoom Meet",
+        "subject_key": "fl_email_zoom_meet_subject",
+        "subject": "Tienes una invitación para reunión Zoom",
+        "body_key": "fl_email_zoom_meet_email_body",
+        "body": "Email automático de %site_name% para %display_name%.",
+        "switch_key": "fl_email_zoom_meet_switch",
+        "enabled": true,
+        "placeholders": [
+            "%site_name%",
+            "%display_name%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_zoom_meeting": {
+        "base_key": "fl_email_zoom_meeting",
+        "name": "Fl Email Zoom Meeting",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_email_zoom_meeting_email_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "offer_accepted": {
+        "base_key": "offer_accepted",
+        "name": "Offer Accepted",
+        "subject_key": "offer_accepted_sub",
+        "subject": "Nueva orden en tu servicio — %service_title%",
+        "body_key": "offer_accepted_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 10px\">Has recibido una nueva orden<\/h1>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Hola %display_name%,<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Se ha generado una nueva orden en tu servicio <strong>%service_title%<\/strong> en <strong>%site_name%<\/strong>.<\/p>\n<a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"%service_link%\">Ver servicio<\/a>",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%service_title%",
+            "%site_name%",
+            "%service_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "offer_rejected": {
+        "base_key": "offer_rejected",
+        "name": "Offer Rejected",
+        "subject_key": "offer_rejected_sub",
+        "subject": "Tu oferta personalizada fue rechazada — %service_title%",
+        "body_key": "offer_rejected_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 10px\">Oferta rechazada<\/h1>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Hola %display_name%,<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Tu oferta personalizada para <strong>%service_title%<\/strong> ha sido rechazada.<\/p>\n<a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"%service_link%\">Ver servicio<\/a>",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%service_title%",
+            "%service_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "custom_offer": {
+        "base_key": "custom_offer",
+        "name": "Custom Offer",
+        "subject_key": "custom_offer_subject",
+        "subject": "Nueva oferta personalizada — %service_title%",
+        "body_key": "custom_offer_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 10px\">Nueva oferta personalizada<\/h1>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Hola %display_name%,<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Has recibido una oferta personalizada para tu servicio <strong>%service_title%<\/strong> en <strong>%site_name%<\/strong>.<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\"><strong>Entrega estimada:<\/strong> %service_delivery%<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\"><strong>Precio:<\/strong> %service_cost%<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\">Descripción:<\/p>\n<p style=\"font-size: 16px;margin: 0 0 16px\">%service_description%<\/p>\n<a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"%service_link%\">Ver oferta<\/a>",
+        "switch_key": "custom_offer_switch",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%service_title%",
+            "%site_name%",
+            "%service_delivery%",
+            "%service_cost%",
+            "%service_description%",
+            "%service_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_onservice_created": {
+        "base_key": "fl_onservice_created",
+        "name": "Fl Onservice Created",
+        "subject_key": "fl_onservice_created_sub",
+        "subject": "¡Felicitaciones! Tu servicio se publicó correctamente",
+        "body_key": "fl_onservice_created_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 18px;font-family: sans-serif\">¡Hola, %display_name%!<\/h1>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">¡Enhorabuena! Tu servicio <strong>%service_title%<\/strong> ya está publicado en <strong>%site_name%<\/strong> y listo para recibir contrataciones.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\"><strong>Enlace directo:<\/strong> <a style=\"color: #3cbeb2;text-decoration: none\" href=\"%service_link%\" target=\"_blank\" rel=\"noopener\">%service_link%<\/a><\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\"><a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"%dashboard_link%\" target=\"_blank\" rel=\"noopener\">Ver mi servicio en el panel<\/a><\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Comparte tu servicio en redes sociales y mantén tu portafolio actualizado para aumentar tus posibilidades de contratación.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">¿Tienes preguntas? Responde a este correo y con gusto te ayudaremos.<\/p>",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%service_title%",
+            "%site_name%",
+            "%service_link%",
+            "%dashboard_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_onservice_updated": {
+        "base_key": "fl_onservice_updated",
+        "name": "Fl Onservice Updated",
+        "subject_key": "fl_onservice_updated_sub",
+        "subject": "Tu servicio se actualizó correctamente",
+        "body_key": "fl_onservice_updated_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 18px;font-family: sans-serif\">¡Hola, %display_name%!<\/h1>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Los cambios que realizaste en tu servicio <strong>%service_title%<\/strong> ya están activos en <strong>%site_name%<\/strong>.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\"><strong>Enlace directo:<\/strong> <a style=\"color: #3cbeb2;text-decoration: none\" href=\"%service_link%\" target=\"_blank\" rel=\"noopener\">%service_link%<\/a><\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\"><a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"%dashboard_link%\" target=\"_blank\" rel=\"noopener\">Ver mis servicios<\/a><\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Recuerda mantener tu descripción y tu galería actualizadas para destacar frente a los clientes. ¡Comparte tu servicio actualizado en redes para ganar visibilidad!<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">¿Dudas o comentarios? Responde a este correo y con gusto te ayudaremos.<\/p>",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%service_title%",
+            "%site_name%",
+            "%service_link%",
+            "%dashboard_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_onservice_rejected": {
+        "base_key": "fl_onservice_rejected",
+        "name": "Fl Onservice Rejected",
+        "subject_key": "fl_onservice_rejected_sub",
+        "subject": "Revisa tu servicio: necesitamos algunos ajustes",
+        "body_key": "fl_onservice_rejected_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 18px;font-family: sans-serif\">Hola, %display_name%<\/h1>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Lamentamos informarte que tu servicio <strong>%service_title%<\/strong> ha sido rechazado en <strong>%site_name%<\/strong>.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\"><strong>Motivo del rechazo:<\/strong> %rejection_reason%<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\"><strong>Enlace al servicio:<\/strong> <a style=\"color: #3cbeb2;text-decoration: none\" href=\"%service_link%\" target=\"_blank\" rel=\"noopener\">%service_link%<\/a><\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\"><a style=\"color: #3cbeb2;text-decoration: none;font-weight: 600\" href=\"%edit_link%\" target=\"_blank\" rel=\"noopener\"> Editar y reenviar <\/a><\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Por favor, revisa las directrices de la plataforma y ajusta tu servicio. Una vez corregido, vuelve a enviarlo para revisión. Si crees que se trata de un error o necesitas más detalles, responde a este correo y con gusto te ayudaremos.<\/p>",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%service_title%",
+            "%site_name%",
+            "%rejection_reason%",
+            "%service_link%",
+            "%edit_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_freelancer_order_receive": {
+        "base_key": "fl_freelancer_order_receive",
+        "name": "Fl Freelancer Order Receive",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_freelancer_order_receive_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_emp_order_created": {
+        "base_key": "fl_emp_order_created",
+        "name": "Fl Emp Order Created",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_emp_order_created_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_freelancer_complete_order": {
+        "base_key": "fl_freelancer_complete_order",
+        "name": "Fl Freelancer Complete Order",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_freelancer_complete_order_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_emp_complete_order": {
+        "base_key": "fl_emp_complete_order",
+        "name": "Fl Emp Complete Order",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_emp_complete_order_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_emp_downloadable_complete_order": {
+        "base_key": "fl_email_emp_downloadable_complete_order",
+        "name": "Fl Email Emp Downloadable Complete Order",
+        "subject_key": "fl_email_emp_downloadable_complete_order_subj",
+        "subject": "¡Gracias por tu compra en %site_name%!",
+        "body_key": "fl_email_emp_downloadable_complete_order_message_body",
+        "body": "",
+        "switch_key": "fl_email_emp_downloadable_complete_order",
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_freelancer_download_able_complete_order": {
+        "base_key": "fl_freelancer_download_able_complete_order",
+        "name": "Fl Freelancer Download Able Complete Order",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_freelancer_download_able_complete_order_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_freelancer_cancel_order": {
+        "base_key": "fl_freelancer_cancel_order",
+        "name": "Fl Freelancer Cancel Order",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_freelancer_cancel_order_message_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_emp_cancel_order": {
+        "base_key": "fl_email_emp_cancel_order",
+        "name": "Fl Email Emp Cancel Order",
+        "subject_key": "fl_email_emp_cancel_order_sub",
+        "subject": "Tu pedido ha sido cancelado en %site_name%",
+        "body_key": "fl_email_emp_cancel_order_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 18px;font-family: sans-serif\">Hola %display_name%,<\/h1>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Te informamos que tu pedido ha sido cancelado en <strong>%site_name%<\/strong>.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Gracias por confiar en QvaClick.<\/p>\n<a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"%order_link%\">Ver pedido<\/a>",
+        "switch_key": "fl_email_emp_cancel_order",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%",
+            "%order_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_onservice_pending_toadmin": {
+        "base_key": "fl_email_onservice_pending_toadmin",
+        "name": "Fl Email Onservice Pending Toadmin",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "fl_email_onservice_pending_toadmin_email_body",
+        "body": "",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_payout_create": {
+        "base_key": "fl_email_payout_create",
+        "name": "Fl Email Payout Create",
+        "subject_key": "fl_email_payout_create_sub",
+        "subject": "Tu pago ha sido creado",
+        "body_key": "fl_email_payout_create_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 18px;font-family: sans-serif\">Hola %display_name%,<\/h1>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Hemos generado correctamente tu solicitud de retiro en <strong>QvaClick<\/strong>.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\"><strong>Monto del retiro:<\/strong> %payout_amount%<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">En breve comenzará su procesamiento. Recibirás otra notificación una vez que el pago sea aprobado o enviado.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">¿Tienes dudas? Solo responde a este correo, nuestro equipo estará encantado de ayudarte.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Gracias por confiar en <strong>QvaClick<\/strong> para impulsar tu trabajo freelance.<\/p>\n<h2 style=\"font-size: 22px;margin: 0 0 16px;font-family: sans-serif\"><a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"%dashboard_link%\">Ver solicitud de retiro<\/a><\/h2>",
+        "switch_key": "fl_email_payout_create",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%payout_amount%",
+            "%dashboard_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_payout_processed": {
+        "base_key": "fl_email_payout_processed",
+        "name": "Fl Email Payout Processed",
+        "subject_key": "fl_email_payout_processed_sub",
+        "subject": "Su pago ha sido procesado",
+        "body_key": "fl_email_payout_processed_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 18px;font-family: sans-serif\">¡Hola %display_name%!<\/h1>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Tu retiro ha sido procesado con éxito.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">El monto solicitado ha sido enviado utilizando el método seleccionado. Revisa tu cuenta o monedero correspondiente para confirmar la recepción.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">¿Tienes alguna pregunta? Solo responde a este correo y con gusto te ayudaremos.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Gracias por confiar en <strong>QvaClick<\/strong>.<br \/>¡Sigue creciendo con nosotros!<\/p>\n<h2 style=\"font-size: 22px;margin: 0 0 16px;font-family: sans-serif\"><a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"%dashboard_link%\">Ver estado del retiro<\/a><\/h2>",
+        "switch_key": "fl_email_payout_processed",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%dashboard_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_identity_verify": {
+        "base_key": "fl_email_identity_verify",
+        "name": "Fl Email Identity Verify",
+        "subject_key": "fl_email_identity_verify_sub",
+        "subject": "¡Tu identidad ha sido verificada en %site_name%!",
+        "body_key": "fl_email_identity_verify_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 18px;font-family: sans-serif\">¡Hola %display_name%!<\/h1>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">¡Enhorabuena! Hemos verificado tu identidad en <strong>%site_name%<\/strong>.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Ahora tu perfil mostrará el distintivo de <em>Cuenta Verificada<\/em>, lo que aumenta la confianza de clientes y agiliza procesos como pagos y retiros.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Explora proyectos, envía propuestas y disfruta de todas las ventajas de pertenecer a la comunidad QvaClick. Si necesitas ayuda adicional, responde a este correo: estamos para apoyarte.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Gracias por confiar en QvaClick.<\/p>\n<a style=\"background-color: #5aadff;color: #fff;padding: 12px 24px;border-radius: 4px;text-decoration: none;font-weight: bold\" href=\"%dashboard_link%\">Verificar mi identidad<\/a>",
+        "switch_key": "fl_email_identity_verify",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%",
+            "%dashboard_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_package_expiray": {
+        "base_key": "fl_package_expiray",
+        "name": "Fl Package Expiray",
+        "subject_key": "fl_package_expiray_subject",
+        "subject": "Tu paquete %package_name% vence en %no_of_days% días",
+        "body_key": "fl_package_expiray_email_body",
+        "body": "Email automático de %site_name% para %display_name%.",
+        "switch_key": "fl_package_expiray_switch",
+        "enabled": true,
+        "placeholders": [
+            "%site_name%",
+            "%display_name%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_hire_freelancer": {
+        "base_key": "fl_email_hire_freelancer",
+        "name": "Fl Email Hire Freelancer",
+        "subject_key": "fl_email_hire_freelancer_sub",
+        "subject": "¡Tienes una nueva invitación de proyecto en %site_name%!",
+        "body_key": "fl_email_hire_freelancer_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 18px;font-family: sans-serif\">¡Hola, %display_name%!<\/h1>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">¡Buenas noticias! Un cliente acaba de invitarte a colaborar en <strong>%site_name%<\/strong>.<\/p>\n<p style=\"font-size: 18px;margin: 0 0 20px\"><a style=\"background: #3cbeb2;color: #fff !important;padding: 12px 22px;border-radius: 6px;font-weight: 600;text-decoration: none\" href=\"#\">Ver detalles de «%project_title%»<\/a><\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\"><strong>Enlace directo:<\/strong> %project_link%<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Revisa el proyecto y envía tu propuesta cuanto antes. Si tienes preguntas, responde a este correo; nuestro equipo está listo para ayudarte.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">¡Gracias por confiar en QvaClick para impulsar tu carrera freelance!<\/p>",
+        "switch_key": "fl_email_hire_freelancer",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%",
+            "%project_title%",
+            "%project_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "fl_email_project_alerts": {
+        "base_key": "fl_email_project_alerts",
+        "name": "Fl Email Project Alerts",
+        "subject_key": "fl_email_project_alerts_subj",
+        "subject": "[Alerta Admin] Nuevo proyecto publicado en %project_category%",
+        "body_key": "fl_email_project_alerts_body",
+        "body": "<h1 style=\"font-size: 28px;margin: 0 0 18px;font-family: sans-serif\">Hola equipo de administración,<\/h1>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Se ha creado un nuevo proyecto en la categoría <strong>%project_category%<\/strong>. Revisa sus detalles y asegúrate de que cumple con nuestras políticas antes de hacerlo público.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\"><strong>Título:<\/strong> %project_title%<br \/><strong>Enlace directo:<\/strong> <a style=\"color: #3cbeb2;text-decoration: none;font-weight: 600\" href=\"%project_link%\" target=\"_blank\" rel=\"noopener\">%project_link%<\/a><\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Si detectas contenido inapropiado o necesitas ajustes, marca el proyecto para revisión y avisa al área correspondiente.<\/p>\n<p style=\"font-size: 16px;line-height: 1.5;margin: 0 0 16px;font-family: sans-serif\">Gracias por mantener la calidad de nuestra plataforma.<\/p>",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [
+            "%project_category%",
+            "%project_title%",
+            "%project_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "project_approval": {
+        "base_key": "project_approval",
+        "name": "Project Approval",
+        "subject_key": "project_approval_sub",
+        "subject": "Proyecto aprobado en %site_name%",
+        "body_key": "project_approval_email_body",
+        "body": "Hola %display_name%, tu proyecto ha sido aprobado en %site_name%.",
+        "switch_key": "project_approval",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "website_footer": {
+        "base_key": "website_footer",
+        "name": "Website Footer",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "website_footer_content",
+        "body": "Tu espacio digital para contratar y ofrecer servicios freelance con enfoque latino y visión global.",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "action": {
+        "base_key": "action",
+        "name": "Action",
+        "subject_key": null,
+        "subject": "",
+        "body_key": "action_content",
+        "body": "En QvaClick puedes lanzar tu proyecto hoy mismo o empezar a vender tus servicios. ¡Conéctate con clientes y freelancers en un solo lugar!",
+        "switch_key": null,
+        "enabled": true,
+        "placeholders": [],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "user_registration": {
+        "base_key": "user_registration",
+        "name": "User Registration",
+        "subject_key": "user_registration_sub",
+        "subject": "Bienvenido a %site_name%",
+        "body_key": "user_registration_email_body",
+        "body": "Hola %display_name%, bienvenido a %site_name%. Tu cuenta ha sido creada exitosamente.",
+        "switch_key": "user_registration_switch",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "user_verification": {
+        "base_key": "user_verification",
+        "name": "User Verification",
+        "subject_key": "user_verification_sub",
+        "subject": "Confirma tu cuenta en %site_name%",
+        "body_key": "user_verification_email_body",
+        "body": "Hola %display_name%, confirma tu cuenta haciendo clic en: %verification_link%",
+        "switch_key": "user_verification_switch",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%verification_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "password_reset": {
+        "base_key": "password_reset",
+        "name": "Password Reset",
+        "subject_key": "password_reset_sub",
+        "subject": "Restablecer contraseña - %site_name%",
+        "body_key": "password_reset_email_body",
+        "body": "Hola %display_name%, restablece tu contraseña en: %reset_link%",
+        "switch_key": "password_reset_switch",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%reset_link%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "project_publication": {
+        "base_key": "project_publication",
+        "name": "Project Publication",
+        "subject_key": "project_publication_sub",
+        "subject": "Tu proyecto ha sido publicado - %site_name%",
+        "body_key": "project_publication_email_body",
+        "body": "Hola %display_name%, tu proyecto ha sido publicado en %site_name%.",
+        "switch_key": "project_publication_switch",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "project_rejection": {
+        "base_key": "project_rejection",
+        "name": "Project Rejection",
+        "subject_key": "project_rejection_sub",
+        "subject": "Proyecto rechazado en %site_name%",
+        "body_key": "project_rejection_email_body",
+        "body": "Hola %display_name%, tu proyecto ha sido rechazado en %site_name%.",
+        "switch_key": "project_rejection_switch",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "project_update": {
+        "base_key": "project_update",
+        "name": "Project Update",
+        "subject_key": "project_update_sub",
+        "subject": "Actualización de proyecto - %site_name%",
+        "body_key": "project_update_email_body",
+        "body": "Hola %display_name%, hay una actualización en tu proyecto en %site_name%.",
+        "switch_key": "project_update_switch",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "new_message": {
+        "base_key": "new_message",
+        "name": "New Message",
+        "subject_key": "new_message_sub",
+        "subject": "Nuevo mensaje en %site_name%",
+        "body_key": "new_message_email_body",
+        "body": "Hola %display_name%, tienes un nuevo mensaje en %site_name%.",
+        "switch_key": "new_message_switch",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    },
+    "admin_notification": {
+        "base_key": "admin_notification",
+        "name": "Admin Notification",
+        "subject_key": "admin_notification_sub",
+        "subject": "Notificación administrativa - %site_name%",
+        "body_key": "admin_notification_email_body",
+        "body": "Notificación administrativa para %display_name% en %site_name%.",
+        "switch_key": "admin_notification_switch",
+        "enabled": true,
+        "placeholders": [
+            "%display_name%",
+            "%site_name%"
+        ],
+        "last_modified": "",
+        "source": "redux_direct"
+    }
+}

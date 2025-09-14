@@ -1,0 +1,1215 @@
+<?php
+/**
+ * Enhanced Admin Email Interface with General Inbox
+ * Interfaz de administración mejorada con bandeja general
+ * 
+ * @package QvaClick_Email_Manager
+ */
+
+// Prevent direct access
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+class QvaClick_Enhanced_Admin_Interface {
+    
+    public function __construct() {
+        // DESHABILITADO: Esta interfaz causa duplicación con la interfaz principal
+        // Solo se mantiene para compatibilidad de métodos
+        // add_action('admin_menu', array($this, 'add_admin_menu'));
+        add_action('admin_enqueue_scripts', array($this, 'enqueue_admin_scripts'));
+        add_action('wp_ajax_qvc_process_inbox_email', array($this, 'ajax_process_inbox_email'));
+        add_action('wp_ajax_qvc_quarantine_action', array($this, 'ajax_quarantine_action'));
+        add_action('wp_ajax_qvc_bulk_action', array($this, 'ajax_bulk_action'));
+        add_action('wp_ajax_qvc_view_email', array($this, 'ajax_view_email'));
+        add_action('wp_ajax_qvc_update_email_status', array($this, 'ajax_update_email_status'));
+    }
+    
+    /**
+     * Add admin menu
+     */
+    public function add_admin_menu() {
+        add_menu_page(
+            'QvaClick Email Manager',
+            'Email Manager',
+            'manage_options',
+            'qvaclick-email-manager',
+            array($this, 'admin_page'),
+            'dashicons-email-alt',
+            30
+        );
+    }
+    
+    /**
+     * Enqueue admin scripts and styles
+     */
+    public function enqueue_admin_scripts($hook) {
+        if (strpos($hook, 'qvaclick-email-manager') !== false) {
+            wp_enqueue_style('qvc-admin-css', plugin_dir_url(__FILE__) . '../assets/admin-style.css', array(), '1.0.0');
+            wp_enqueue_script('qvc-admin-js', plugin_dir_url(__FILE__) . '../assets/admin-script.js', array('jquery'), '1.0.0', true);
+            
+            wp_localize_script('qvc-admin-js', 'qvc_ajax', array(
+                'ajax_url' => admin_url('admin-ajax.php'),
+                'nonce' => wp_create_nonce('qvc_admin_nonce')
+            ));
+        }
+    }
+    
+    /**
+     * Main admin page
+     */
+    public function admin_page() {
+        $active_tab = isset($_GET['tab']) ? sanitize_text_field($_GET['tab']) : 'general_inbox';
+        ?>
+        <div class="wrap qvc-admin-wrap">
+            <h1>QvaClick Email Manager</h1>
+            
+            <!-- Enhanced Navigation Tabs -->
+            <nav class="nav-tab-wrapper qvc-nav-tabs">
+                <a href="?page=qvaclick-email-manager&tab=general_inbox" 
+                   class="nav-tab <?php echo $active_tab === 'general_inbox' ? 'nav-tab-active' : ''; ?>">
+                    <span class="dashicons dashicons-inbox"></span>
+                    Bandeja General
+                    <?php $this->render_badge_count('general_inbox'); ?>
+                </a>
+                <a href="?page=qvaclick-email-manager&tab=tickets" 
+                   class="nav-tab <?php echo $active_tab === 'tickets' ? 'nav-tab-active' : ''; ?>">
+                    <span class="dashicons dashicons-tickets-alt"></span>
+                    Tickets de Soporte
+                    <?php $this->render_badge_count('tickets'); ?>
+                </a>
+                <a href="?page=qvaclick-email-manager&tab=sales_leads" 
+                   class="nav-tab <?php echo $active_tab === 'sales_leads' ? 'nav-tab-active' : ''; ?>">
+                    <span class="dashicons dashicons-money-alt"></span>
+                    Leads de Ventas
+                    <?php $this->render_badge_count('sales_leads'); ?>
+                </a>
+                <a href="?page=qvaclick-email-manager&tab=quarantine" 
+                   class="nav-tab <?php echo $active_tab === 'quarantine' ? 'nav-tab-active' : ''; ?>">
+                    <span class="dashicons dashicons-shield-alt"></span>
+                    Cuarentena
+                    <?php $this->render_badge_count('quarantine'); ?>
+                </a>
+                <a href="?page=qvaclick-email-manager&tab=outbox" 
+                   class="nav-tab <?php echo $active_tab === 'outbox' ? 'nav-tab-active' : ''; ?>">
+                    <span class="dashicons dashicons-email-alt"></span>
+                    Bandeja de Salida
+                </a>
+                <a href="?page=qvaclick-email-manager&tab=mass_email" 
+                   class="nav-tab <?php echo $active_tab === 'mass_email' ? 'nav-tab-active' : ''; ?>">
+                    <span class="dashicons dashicons-groups"></span>
+                    Email Masivo
+                </a>
+                <a href="?page=qvaclick-email-manager&tab=settings" 
+                   class="nav-tab <?php echo $active_tab === 'settings' ? 'nav-tab-active' : ''; ?>">
+                    <span class="dashicons dashicons-admin-settings"></span>
+                    Configuración
+                </a>
+            </nav>
+            
+            <!-- Tab Content -->
+            <div class="qvc-tab-content">
+                <?php
+                switch ($active_tab) {
+                    case 'general_inbox':
+                        $this->render_general_inbox();
+                        break;
+                    case 'tickets':
+                        $this->render_tickets_tab();
+                        break;
+                    case 'sales_leads':
+                        $this->render_sales_leads_tab();
+                        break;
+                    case 'quarantine':
+                        $this->render_quarantine_tab();
+                        break;
+                    case 'outbox':
+                        $this->render_outbox_tab();
+                        break;
+                    case 'mass_email':
+                        $this->render_mass_email_tab();
+                        break;
+                    case 'settings':
+                        $this->render_settings_tab();
+                        break;
+                    default:
+                        $this->render_general_inbox();
+                }
+                ?>
+            </div>
+        </div>
+        
+        <style>
+        .qvc-admin-wrap {
+            margin: 20px 0;
+        }
+        
+        .qvc-nav-tabs .nav-tab {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            margin-right: 4px;
+            background: #f1f1f1;
+            border: 1px solid #ccc;
+            border-bottom: none;
+            text-decoration: none;
+            color: #555;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .qvc-nav-tabs .nav-tab:hover {
+            background: #e1e1e1;
+            color: #333;
+        }
+        
+        .qvc-nav-tabs .nav-tab-active {
+            background: #fff;
+            color: #0073aa;
+            border-bottom: 1px solid #fff;
+            margin-bottom: -1px;
+            box-shadow: 0 -2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .qvc-nav-tabs .dashicons {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+        }
+        
+        .qvc-tab-badge {
+            background: #d63638;
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 16px;
+            text-align: center;
+            line-height: 1.2;
+            margin-left: 4px;
+        }
+        
+        .qvc-tab-content {
+            background: #fff;
+            border: 1px solid #ccc;
+            border-top: none;
+            padding: 20px;
+            min-height: 500px;
+        }
+        
+        .qvc-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .qvc-stat-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #0073aa;
+            text-align: center;
+        }
+        
+        .qvc-stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 28px;
+            color: #0073aa;
+        }
+        
+        .qvc-stat-card p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .qvc-email-list {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .qvc-email-item {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        
+        .qvc-email-item:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .qvc-email-item:last-child {
+            border-bottom: none;
+        }
+        
+        .qvc-email-checkbox {
+            margin-right: 15px;
+        }
+        
+        .qvc-email-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .qvc-email-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .qvc-email-from {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .qvc-email-date {
+            font-size: 12px;
+            color: #999;
+        }
+        
+        .qvc-email-subject {
+            font-size: 14px;
+            color: #0073aa;
+            margin-bottom: 5px;
+            text-decoration: none;
+        }
+        
+        .qvc-email-subject:hover {
+            text-decoration: underline;
+        }
+        
+        .qvc-email-preview {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.4;
+            max-height: 2.8em;
+            overflow: hidden;
+        }
+        
+        .qvc-email-meta {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        
+        .qvc-email-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+        
+        .qvc-badge-category {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .qvc-badge-priority {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .qvc-badge-priority.high {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+        
+        .qvc-badge-priority.low {
+            background: #e8f5e8;
+            color: #388e3c;
+        }
+        
+        .qvc-email-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 15px;
+        }
+        
+        .qvc-action-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .qvc-action-btn.primary {
+            background: #0073aa;
+            color: white;
+        }
+        
+        .qvc-action-btn.primary:hover {
+            background: #005a87;
+        }
+        
+        .qvc-action-btn.secondary {
+            background: #f1f1f1;
+            color: #555;
+        }
+        
+        .qvc-action-btn.secondary:hover {
+            background: #e1e1e1;
+        }
+        
+        .qvc-bulk-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .qvc-filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .qvc-filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .qvc-filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #666;
+        }
+        
+        .qvc-filter-group select {
+            padding: 6px 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        </style>
+        <?php
+    }
+    
+    /**
+     * Render badge count for navigation tabs
+     */
+    private function render_badge_count($tab) {
+        global $wpdb;
+        
+        $count = 0;
+        
+        switch ($tab) {
+            case 'general_inbox':
+                $table = $wpdb->prefix . 'qvc_general_inbox';
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'unread'");
+                break;
+                
+            case 'tickets':
+                $table = $wpdb->prefix . 'qvc_support_tickets';
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'open'");
+                break;
+                
+            case 'sales_leads':
+                $table = $wpdb->prefix . 'qvc_sales_leads';
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'new'");
+                break;
+                
+            case 'quarantine':
+                $table = $wpdb->prefix . 'qvc_email_quarantine';
+                $count = $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'quarantined'");
+                break;
+        }
+        
+        if ($count > 0) {
+            echo '<span class="qvc-tab-badge">' . esc_html($count) . '</span>';
+        }
+    }
+    
+    /**
+     * Render General Inbox tab
+     */
+    private function render_general_inbox() {
+        global $wpdb;
+        
+        // Get statistics
+        $table = $wpdb->prefix . 'qvc_general_inbox';
+        $stats = array(
+            'total' => $wpdb->get_var("SELECT COUNT(*) FROM {$table}"),
+            'unread' => $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE status = 'unread'"),
+            'requires_action' => $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE requires_action = 1"),
+            'processed_today' => $wpdb->get_var("SELECT COUNT(*) FROM {$table} WHERE processed_at >= CURDATE()")
+        );
+        
+        // Get emails with filters
+        $where = "1=1";
+        $filter_status = isset($_GET['filter_status']) ? sanitize_text_field($_GET['filter_status']) : '';
+        $filter_category = isset($_GET['filter_category']) ? sanitize_text_field($_GET['filter_category']) : '';
+        $filter_priority = isset($_GET['filter_priority']) ? sanitize_text_field($_GET['filter_priority']) : '';
+        
+        if ($filter_status) {
+            $where .= $wpdb->prepare(" AND status = %s", $filter_status);
+        }
+        if ($filter_category) {
+            $where .= $wpdb->prepare(" AND category = %s", $filter_category);
+        }
+        if ($filter_priority) {
+            $where .= $wpdb->prepare(" AND priority = %s", $filter_priority);
+        }
+        
+        $emails = $wpdb->get_results("
+            SELECT * FROM {$table} 
+            WHERE {$where} 
+            ORDER BY 
+                CASE WHEN priority = 'high' THEN 1 
+                     WHEN priority = 'medium' THEN 2 
+                     ELSE 3 END,
+                created_at DESC 
+            LIMIT 50
+        ");
+        ?>
+        
+        <div class="qvc-general-inbox">
+            <h2>Bandeja General de Emails</h2>
+            <p>Emails clasificados automáticamente que no son tickets de soporte ni leads de ventas.</p>
+            
+            <!-- Statistics -->
+            <div class="qvc-stats-grid">
+                <div class="qvc-stat-card">
+                    <h3><?php echo esc_html($stats['total']); ?></h3>
+                    <p>Total de Emails</p>
+                </div>
+                <div class="qvc-stat-card">
+                    <h3><?php echo esc_html($stats['unread']); ?></h3>
+                    <p>Sin Leer</p>
+                </div>
+                <div class="qvc-stat-card">
+                    <h3><?php echo esc_html($stats['requires_action']); ?></h3>
+                    <p>Requieren Acción</p>
+                </div>
+                <div class="qvc-stat-card">
+                    <h3><?php echo esc_html($stats['processed_today']); ?></h3>
+                    <p>Procesados Hoy</p>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="qvc-filters">
+                <div class="qvc-filter-group">
+                    <label>Estado:</label>
+                    <select name="filter_status" onchange="this.form.submit()">
+                        <option value="">Todos</option>
+                        <option value="unread" <?php selected($filter_status, 'unread'); ?>>Sin leer</option>
+                        <option value="read" <?php selected($filter_status, 'read'); ?>>Leído</option>
+                        <option value="assigned" <?php selected($filter_status, 'assigned'); ?>>Asignado</option>
+                        <option value="processed" <?php selected($filter_status, 'processed'); ?>>Procesado</option>
+                    </select>
+                </div>
+                
+                <div class="qvc-filter-group">
+                    <label>Categoría:</label>
+                    <select name="filter_category" onchange="this.form.submit()">
+                        <option value="">Todas</option>
+                        <option value="general_inquiries" <?php selected($filter_category, 'general_inquiries'); ?>>Consultas Generales</option>
+                        <option value="administrative" <?php selected($filter_category, 'administrative'); ?>>Administrativo</option>
+                        <option value="newsletters" <?php selected($filter_category, 'newsletters'); ?>>Newsletters</option>
+                    </select>
+                </div>
+                
+                <div class="qvc-filter-group">
+                    <label>Prioridad:</label>
+                    <select name="filter_priority" onchange="this.form.submit()">
+                        <option value="">Todas</option>
+                        <option value="high" <?php selected($filter_priority, 'high'); ?>>Alta</option>
+                        <option value="medium" <?php selected($filter_priority, 'medium'); ?>>Media</option>
+                        <option value="low" <?php selected($filter_priority, 'low'); ?>>Baja</option>
+                    </select>
+                </div>
+                
+                <button type="button" onclick="location.href='?page=qvaclick-email-manager&tab=general_inbox'" class="qvc-action-btn secondary">
+                    Limpiar Filtros
+                </button>
+            </div>
+            
+            <!-- Bulk Actions -->
+            <form method="post" class="qvc-bulk-actions">
+                <input type="checkbox" id="select-all-inbox" onchange="toggleAllCheckboxes('inbox')">
+                <label for="select-all-inbox">Seleccionar todos</label>
+                
+                <select name="bulk_action">
+                    <option value="">Acción en lote...</option>
+                    <option value="mark_read">Marcar como leído</option>
+                    <option value="assign_to_user">Asignar a usuario</option>
+                    <option value="change_priority">Cambiar prioridad</option>
+                    <option value="create_ticket">Convertir a ticket</option>
+                    <option value="delete">Eliminar</option>
+                </select>
+                
+                <button type="submit" class="qvc-action-btn primary">Aplicar</button>
+            </form>
+            
+            <!-- Email List -->
+            <div class="qvc-email-list">
+                <?php if (empty($emails)): ?>
+                    <div style="padding: 40px; text-align: center; color: #666;">
+                        <span class="dashicons dashicons-inbox" style="font-size: 48px; margin-bottom: 10px;"></span>
+                        <p>No hay emails en la bandeja general.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($emails as $email): ?>
+                        <div class="qvc-email-item" data-email-id="<?php echo esc_attr($email->id); ?>">
+                            <input type="checkbox" class="qvc-email-checkbox inbox-checkbox" value="<?php echo esc_attr($email->id); ?>">
+                            
+                            <div class="qvc-email-content">
+                                <div class="qvc-email-header">
+                                    <span class="qvc-email-from"><?php echo esc_html($email->sender_email); ?></span>
+                                    <span class="qvc-email-date"><?php echo esc_html(human_time_diff(strtotime($email->created_at))); ?> ago</span>
+                                </div>
+                                
+                                <a href="#" class="qvc-email-subject" onclick="viewEmail(<?php echo esc_attr($email->id); ?>)">
+                                    <?php echo esc_html($email->subject); ?>
+                                </a>
+                                
+                                <div class="qvc-email-preview">
+                                    <?php echo esc_html(wp_trim_words(strip_tags($email->body), 20)); ?>
+                                </div>
+                                
+                                <div class="qvc-email-meta">
+                                    <span class="qvc-email-badge qvc-badge-category">
+                                        <?php echo esc_html(ucfirst(str_replace('_', ' ', $email->category))); ?>
+                                    </span>
+                                    <span class="qvc-email-badge qvc-badge-priority <?php echo esc_attr($email->priority); ?>">
+                                        <?php echo esc_html(ucfirst($email->priority)); ?>
+                                    </span>
+                                    <span class="qvc-email-badge">
+                                        Confianza: <?php echo esc_html($email->confidence); ?>%
+                                    </span>
+                                    <?php if ($email->requires_action): ?>
+                                        <span class="qvc-email-badge" style="background: #ffebee; color: #d32f2f;">
+                                            Requiere Acción
+                                        </span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            
+                            <div class="qvc-email-actions">
+                                <button type="button" class="qvc-action-btn primary" onclick="processInboxEmail(<?php echo esc_attr($email->id); ?>, 'ticket')">
+                                    Crear Ticket
+                                </button>
+                                <button type="button" class="qvc-action-btn secondary" onclick="processInboxEmail(<?php echo esc_attr($email->id); ?>, 'assign')">
+                                    Asignar
+                                </button>
+                                <button type="button" class="qvc-action-btn secondary" onclick="processInboxEmail(<?php echo esc_attr($email->id); ?>, 'read')">
+                                    Marcar Leído
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        
+        <script>
+        function toggleAllCheckboxes(type) {
+            const checkboxes = document.querySelectorAll('.' + type + '-checkbox');
+            const selectAll = document.getElementById('select-all-' + type);
+            
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+        }
+        
+        function processInboxEmail(emailId, action) {
+            const data = {
+                action: 'qvc_process_inbox_email',
+                email_id: emailId,
+                email_action: action,
+                nonce: qvc_ajax.nonce
+            };
+            
+            jQuery.post(qvc_ajax.ajax_url, data, function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.data);
+                }
+            });
+        }
+        
+        function viewEmail(emailId) {
+            const data = {
+                action: 'qvc_view_email',
+                email_id: emailId,
+                nonce: qvc_ajax.nonce
+            };
+            
+            jQuery.post(qvc_ajax.ajax_url, data, function(response) {
+                if (response.success) {
+                    showEmailModal(response.data);
+                } else {
+                    alert('Error: ' + response.data);
+                }
+            });
+        }
+        
+        function showEmailModal(emailData) {
+            // Create modal HTML
+            const modalHtml = `
+                <div id="qvc-email-modal" class="qvc-modal-overlay">
+                    <div class="qvc-modal-content">
+                        <div class="qvc-modal-header">
+                            <h3>Ver Email</h3>
+                            <span class="qvc-modal-close" onclick="closeEmailModal()">&times;</span>
+                        </div>
+                        <div class="qvc-modal-body">
+                            <div class="qvc-email-details">
+                                <div class="qvc-detail-row">
+                                    <label>De:</label>
+                                    <span>${emailData.sender_email}</span>
+                                </div>
+                                <div class="qvc-detail-row">
+                                    <label>Asunto:</label>
+                                    <span>${emailData.subject}</span>
+                                </div>
+                                <div class="qvc-detail-row">
+                                    <label>Fecha:</label>
+                                    <span>${emailData.created_at}</span>
+                                </div>
+                                <div class="qvc-detail-row">
+                                    <label>Estado:</label>
+                                    <select id="email-status" onchange="updateEmailStatus(${emailData.id}, this.value)">
+                                        <option value="unread" ${emailData.status === 'unread' ? 'selected' : ''}>Sin leer</option>
+                                        <option value="read" ${emailData.status === 'read' ? 'selected' : ''}>Leído</option>
+                                        <option value="assigned" ${emailData.status === 'assigned' ? 'selected' : ''}>Asignado</option>
+                                        <option value="processed" ${emailData.status === 'processed' ? 'selected' : ''}>Procesado</option>
+                                    </select>
+                                </div>
+                                <div class="qvc-detail-row">
+                                    <label>Prioridad:</label>
+                                    <select id="email-priority" onchange="updateEmailPriority(${emailData.id}, this.value)">
+                                        <option value="low" ${emailData.priority === 'low' ? 'selected' : ''}>Baja</option>
+                                        <option value="medium" ${emailData.priority === 'medium' ? 'selected' : ''}>Media</option>
+                                        <option value="high" ${emailData.priority === 'high' ? 'selected' : ''}>Alta</option>
+                                    </select>
+                                </div>
+                                <div class="qvc-detail-row">
+                                    <label>Categoría:</label>
+                                    <span class="qvc-badge">${emailData.category}</span>
+                                </div>
+                                <div class="qvc-detail-row">
+                                    <label>Confianza:</label>
+                                    <span>${emailData.confidence}%</span>
+                                </div>
+                            </div>
+                            <div class="qvc-email-body">
+                                <h4>Contenido del Email:</h4>
+                                <div class="qvc-email-content-display">
+                                    ${emailData.body}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="qvc-modal-footer">
+                            <button type="button" class="qvc-action-btn primary" onclick="convertToTicket(${emailData.id})">
+                                Crear Ticket
+                            </button>
+                            <button type="button" class="qvc-action-btn secondary" onclick="closeEmailModal()">
+                                Cerrar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add modal to page
+            jQuery('body').append(modalHtml);
+            
+            // Mark as read when opened
+            updateEmailStatus(emailData.id, 'read');
+        }
+        
+        function closeEmailModal() {
+            jQuery('#qvc-email-modal').remove();
+        }
+        
+        function updateEmailStatus(emailId, status) {
+            const data = {
+                action: 'qvc_update_email_status',
+                email_id: emailId,
+                status: status,
+                nonce: qvc_ajax.nonce
+            };
+            
+            jQuery.post(qvc_ajax.ajax_url, data, function(response) {
+                if (response.success) {
+                    console.log('Estado actualizado correctamente');
+                } else {
+                    alert('Error al actualizar estado: ' + response.data);
+                }
+            });
+        }
+        
+        function updateEmailPriority(emailId, priority) {
+            const data = {
+                action: 'qvc_update_email_status',
+                email_id: emailId,
+                priority: priority,
+                nonce: qvc_ajax.nonce
+            };
+            
+            jQuery.post(qvc_ajax.ajax_url, data, function(response) {
+                if (response.success) {
+                    console.log('Prioridad actualizada correctamente');
+                } else {
+                    alert('Error al actualizar prioridad: ' + response.data);
+                }
+            });
+        }
+        
+        function convertToTicket(emailId) {
+            if (confirm('¿Estás seguro de que quieres convertir este email en un ticket de soporte?')) {
+                processInboxEmail(emailId, 'ticket');
+                closeEmailModal();
+            }
+        }
+        </script>
+        <?php
+    }
+    
+    /**
+     * Render Tickets tab (renamed from "Bandeja de Entrada")
+     */
+    private function render_tickets_tab() {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . 'qvc_support_tickets';
+        $tickets = $wpdb->get_results("
+            SELECT * FROM {$table} 
+            ORDER BY 
+                CASE WHEN status = 'open' THEN 1 
+                     WHEN status = 'pending' THEN 2 
+                     ELSE 3 END,
+                created_at DESC 
+            LIMIT 50
+        ");
+        ?>
+        
+        <div class="qvc-tickets-tab">
+            <h2>Tickets de Soporte</h2>
+            <p>Gestión de tickets creados desde formularios de contacto y emails clasificados como soporte.</p>
+            
+            <!-- Add ticket creation and management interface here -->
+            <div class="qvc-email-list">
+                <?php if (empty($tickets)): ?>
+                    <div style="padding: 40px; text-align: center; color: #666;">
+                        <span class="dashicons dashicons-tickets-alt" style="font-size: 48px; margin-bottom: 10px;"></span>
+                        <p>No hay tickets de soporte.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($tickets as $ticket): ?>
+                        <div class="qvc-email-item">
+                            <div class="qvc-email-content">
+                                <div class="qvc-email-header">
+                                    <span class="qvc-email-from">Ticket #<?php echo esc_html($ticket->id); ?> - <?php echo esc_html($ticket->user_email); ?></span>
+                                    <span class="qvc-email-date"><?php echo esc_html(human_time_diff(strtotime($ticket->created_at))); ?> ago</span>
+                                </div>
+                                
+                                <div class="qvc-email-subject">
+                                    <?php echo esc_html($ticket->subject); ?>
+                                </div>
+                                
+                                <div class="qvc-email-preview">
+                                    <?php echo esc_html(wp_trim_words(strip_tags($ticket->message), 20)); ?>
+                                </div>
+                                
+                                <div class="qvc-email-meta">
+                                    <span class="qvc-email-badge qvc-badge-category">
+                                        <?php echo esc_html(ucfirst($ticket->status)); ?>
+                                    </span>
+                                    <span class="qvc-email-badge qvc-badge-priority <?php echo esc_attr($ticket->priority); ?>">
+                                        <?php echo esc_html(ucfirst($ticket->priority)); ?>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+    }
+    
+    /**
+     * Render Sales Leads tab
+     */
+    private function render_sales_leads_tab() {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . 'qvc_sales_leads';
+        $leads = $wpdb->get_results("
+            SELECT * FROM {$table} 
+            ORDER BY created_at DESC 
+            LIMIT 50
+        ");
+        ?>
+        
+        <div class="qvc-sales-leads-tab">
+            <h2>Leads de Ventas</h2>
+            <p>Emails clasificados automáticamente como consultas comerciales.</p>
+            
+            <div class="qvc-email-list">
+                <?php if (empty($leads)): ?>
+                    <div style="padding: 40px; text-align: center; color: #666;">
+                        <span class="dashicons dashicons-money-alt" style="font-size: 48px; margin-bottom: 10px;"></span>
+                        <p>No hay leads de ventas.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($leads as $lead): ?>
+                        <div class="qvc-email-item">
+                            <div class="qvc-email-content">
+                                <div class="qvc-email-header">
+                                    <span class="qvc-email-from">Lead #<?php echo esc_html($lead->id); ?> - <?php echo esc_html($lead->email); ?></span>
+                                    <span class="qvc-email-date"><?php echo esc_html(human_time_diff(strtotime($lead->created_at))); ?> ago</span>
+                                </div>
+                                
+                                <div class="qvc-email-subject">
+                                    <?php echo esc_html($lead->subject); ?>
+                                </div>
+                                
+                                <div class="qvc-email-preview">
+                                    <?php echo esc_html(wp_trim_words(strip_tags($lead->message), 20)); ?>
+                                </div>
+                                
+                                <div class="qvc-email-meta">
+                                    <span class="qvc-email-badge qvc-badge-category">
+                                        <?php echo esc_html(ucfirst($lead->status)); ?>
+                                    </span>
+                                    <span class="qvc-email-badge qvc-badge-priority <?php echo esc_attr($lead->priority); ?>">
+                                        <?php echo esc_html(ucfirst($lead->priority)); ?>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+    }
+    
+    /**
+     * Render Quarantine tab
+     */
+    private function render_quarantine_tab() {
+        global $wpdb;
+        
+        $table = $wpdb->prefix . 'qvc_email_quarantine';
+        $quarantined = $wpdb->get_results("
+            SELECT * FROM {$table} 
+            WHERE status = 'quarantined'
+            ORDER BY created_at DESC 
+            LIMIT 50
+        ");
+        ?>
+        
+        <div class="qvc-quarantine-tab">
+            <h2>Emails en Cuarentena</h2>
+            <p>Emails bloqueados por el sistema de seguridad por contener amenazas potenciales.</p>
+            
+            <div class="qvc-email-list">
+                <?php if (empty($quarantined)): ?>
+                    <div style="padding: 40px; text-align: center; color: #666;">
+                        <span class="dashicons dashicons-shield-alt" style="font-size: 48px; margin-bottom: 10px;"></span>
+                        <p>No hay emails en cuarentena.</p>
+                    </div>
+                <?php else: ?>
+                    <?php foreach ($quarantined as $email): ?>
+                        <div class="qvc-email-item">
+                            <div class="qvc-email-content">
+                                <div class="qvc-email-header">
+                                    <span class="qvc-email-from"><?php echo esc_html($email->sender_email); ?></span>
+                                    <span class="qvc-email-date"><?php echo esc_html(human_time_diff(strtotime($email->created_at))); ?> ago</span>
+                                </div>
+                                
+                                <div class="qvc-email-subject">
+                                    <?php echo esc_html($email->subject); ?>
+                                </div>
+                                
+                                <div class="qvc-email-preview">
+                                    <strong>Razón:</strong> <?php echo esc_html($email->quarantine_reason); ?>
+                                </div>
+                                
+                                <div class="qvc-email-meta">
+                                    <span class="qvc-email-badge" style="background: #ffebee; color: #d32f2f;">
+                                        Score: <?php echo esc_html($email->security_score); ?>/100
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="qvc-email-actions">
+                                <button type="button" class="qvc-action-btn primary" onclick="quarantineAction(<?php echo esc_attr($email->id); ?>, 'release')">
+                                    Liberar
+                                </button>
+                                <button type="button" class="qvc-action-btn secondary" onclick="quarantineAction(<?php echo esc_attr($email->id); ?>, 'delete')">
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        
+        <script>
+        function quarantineAction(emailId, action) {
+            const data = {
+                action: 'qvc_quarantine_action',
+                email_id: emailId,
+                quarantine_action: action,
+                nonce: qvc_ajax.nonce
+            };
+            
+            jQuery.post(qvc_ajax.ajax_url, data, function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + response.data);
+                }
+            });
+        }
+        </script>
+        <?php
+    }
+    
+    /**
+     * Render remaining tabs (simplified for brevity)
+     */
+    private function render_outbox_tab() {
+        echo '<h2>Bandeja de Salida</h2>';
+        echo '<p>Aquí se mostrarán los emails enviados desde el sistema.</p>';
+    }
+    
+    private function render_mass_email_tab() {
+        echo '<h2>Email Masivo</h2>';
+        echo '<p>Herramientas para envío de emails masivos y campañas.</p>';
+    }
+    
+    private function render_settings_tab() {
+        echo '<h2>Configuración</h2>';
+        echo '<p>Configuración del sistema de emails, IMAP, seguridad y clasificación.</p>';
+    }
+    
+    /**
+     * AJAX handlers
+     */
+    public function ajax_process_inbox_email() {
+        if (!wp_verify_nonce($_POST['nonce'], 'qvc_admin_nonce')) {
+            wp_die('Security check failed');
+        }
+        
+        $email_id = intval($_POST['email_id']);
+        $action = sanitize_text_field($_POST['email_action']);
+        
+        global $wpdb;
+        $table = $wpdb->prefix . 'qvc_general_inbox';
+        
+        switch ($action) {
+            case 'read':
+                $result = $wpdb->update(
+                    $table,
+                    array('status' => 'read'),
+                    array('id' => $email_id),
+                    array('%s'),
+                    array('%d')
+                );
+                break;
+                
+            case 'ticket':
+                // Convert to ticket
+                $email = $wpdb->get_row($wpdb->prepare("SELECT * FROM {$table} WHERE id = %d", $email_id));
+                if ($email) {
+                    $tickets_table = $wpdb->prefix . 'qvc_support_tickets';
+                    $wpdb->insert(
+                        $tickets_table,
+                        array(
+                            'user_email' => $email->sender_email,
+                            'subject' => $email->subject,
+                            'message' => $email->body,
+                            'status' => 'open',
+                            'priority' => $email->priority,
+                            'source' => 'converted_from_inbox',
+                            'created_at' => current_time('mysql')
+                        )
+                    );
+                    
+                    // Mark as processed
+                    $wpdb->update(
+                        $table,
+                        array('status' => 'processed', 'processed_at' => current_time('mysql')),
+                        array('id' => $email_id),
+                        array('%s', '%s'),
+                        array('%d')
+                    );
+                }
+                $result = true;
+                break;
+                
+            default:
+                $result = false;
+        }
+        
+        if ($result !== false) {
+            wp_send_json_success('Action completed successfully');
+        } else {
+            wp_send_json_error('Failed to process action');
+        }
+    }
+    
+    /**
+     * AJAX handler for viewing email details
+     */
+    public function ajax_view_email() {
+        check_ajax_referer('qvc_admin_nonce', 'nonce');
+        
+        $email_id = intval($_POST['email_id']);
+        if (!$email_id) {
+            wp_send_json_error('Invalid email ID');
+        }
+        
+        global $wpdb;
+        $table = $wpdb->prefix . 'qvc_general_inbox';
+        
+        $email = $wpdb->get_row($wpdb->prepare(
+            "SELECT * FROM {$table} WHERE id = %d",
+            $email_id
+        ), ARRAY_A);
+        
+        if (!$email) {
+            wp_send_json_error('Email not found');
+        }
+        
+        // Format the body for display
+        $email['body'] = nl2br(esc_html($email['body']));
+        
+        wp_send_json_success($email);
+    }
+    
+    /**
+     * AJAX handler for updating email status and priority
+     */
+    public function ajax_update_email_status() {
+        check_ajax_referer('qvc_admin_nonce', 'nonce');
+        
+        $email_id = intval($_POST['email_id']);
+        if (!$email_id) {
+            wp_send_json_error('Invalid email ID');
+        }
+        
+        global $wpdb;
+        $table = $wpdb->prefix . 'qvc_general_inbox';
+        
+        $update_data = array();
+        
+        // Update status if provided
+        if (isset($_POST['status'])) {
+            $status = sanitize_text_field($_POST['status']);
+            $valid_statuses = array('unread', 'read', 'assigned', 'processed');
+            
+            if (in_array($status, $valid_statuses)) {
+                $update_data['status'] = $status;
+                
+                // If marking as read, set read timestamp
+                if ($status === 'read') {
+                    $update_data['read_at'] = current_time('mysql');
+                }
+                
+                // If marking as processed, set processed timestamp
+                if ($status === 'processed') {
+                    $update_data['processed_at'] = current_time('mysql');
+                }
+            }
+        }
+        
+        // Update priority if provided
+        if (isset($_POST['priority'])) {
+            $priority = sanitize_text_field($_POST['priority']);
+            $valid_priorities = array('low', 'medium', 'high');
+            
+            if (in_array($priority, $valid_priorities)) {
+                $update_data['priority'] = $priority;
+            }
+        }
+        
+        if (empty($update_data)) {
+            wp_send_json_error('No valid data to update');
+        }
+        
+        $result = $wpdb->update(
+            $table,
+            $update_data,
+            array('id' => $email_id),
+            array(),
+            array('%d')
+        );
+        
+        if ($result !== false) {
+            wp_send_json_success('Email updated successfully');
+        } else {
+            wp_send_json_error('Failed to update email');
+        }
+    }
+    
+    public function ajax_quarantine_action() {
+        if (!wp_verify_nonce($_POST['nonce'], 'qvc_admin_nonce')) {
+            wp_die('Security check failed');
+        }
+        
+        $email_id = intval($_POST['email_id']);
+        $action = sanitize_text_field($_POST['quarantine_action']);
+        
+        global $wpdb;
+        $table = $wpdb->prefix . 'qvc_email_quarantine';
+        
+        switch ($action) {
+            case 'release':
+                $result = $wpdb->update(
+                    $table,
+                    array('status' => 'released', 'reviewed_by' => get_current_user_id(), 'reviewed_at' => current_time('mysql')),
+                    array('id' => $email_id),
+                    array('%s', '%d', '%s'),
+                    array('%d')
+                );
+                break;
+                
+            case 'delete':
+                $result = $wpdb->delete($table, array('id' => $email_id), array('%d'));
+                break;
+                
+            default:
+                $result = false;
+        }
+        
+        if ($result !== false) {
+            wp_send_json_success('Action completed successfully');
+        } else {
+            wp_send_json_error('Failed to process action');
+        }
+    }
+    
+    public function ajax_bulk_action() {
+        // Implement bulk actions
+        wp_send_json_success('Bulk action completed');
+    }
+}
+
+// Initialize the enhanced admin interface
+new QvaClick_Enhanced_Admin_Interface();
+?>

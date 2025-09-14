@@ -1,0 +1,382 @@
+/* QvaClick Email Manager Admin Styles */
+
+/* Modal Styles */
+.qvc-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.qvc-modal-content {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    max-width: 800px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+}
+
+.qvc-modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+}
+
+.qvc-modal-header h3 {
+    margin: 0;
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.qvc-modal-close {
+    font-size: 24px;
+    font-weight: bold;
+    color: #999;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 1;
+}
+
+.qvc-modal-close:hover {
+    color: #333;
+}
+
+.qvc-modal-body {
+    padding: 24px;
+}
+
+.qvc-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    background: #f8f9fa;
+    border-radius: 0 0 8px 8px;
+}
+
+/* Email Details */
+.qvc-email-details {
+    margin-bottom: 24px;
+}
+
+.qvc-detail-row {
+    display: flex;
+    margin-bottom: 12px;
+    align-items: center;
+}
+
+.qvc-detail-row label {
+    font-weight: 600;
+    min-width: 100px;
+    color: #555;
+    margin-right: 12px;
+}
+
+.qvc-detail-row span {
+    color: #333;
+}
+
+.qvc-detail-row select {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.qvc-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+/* Email Content Display */
+.qvc-email-content-display {
+    background: #f8f9fa;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    padding: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.6;
+    word-wrap: break-word;
+}
+
+/* Action Buttons */
+.qvc-action-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.qvc-action-btn.primary {
+    background: #0073aa;
+    color: white;
+}
+
+.qvc-action-btn.primary:hover {
+    background: #005a87;
+}
+
+.qvc-action-btn.secondary {
+    background: #f1f1f1;
+    color: #333;
+    border: 1px solid #ddd;
+}
+
+.qvc-action-btn.secondary:hover {
+    background: #e8e8e8;
+}
+
+/* General Inbox Styles */
+.qvc-general-inbox {
+    margin: 20px 0;
+}
+
+.qvc-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.qvc-stat-card {
+    background: #fff;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.qvc-stat-card h3 {
+    margin: 0 0 4px 0;
+    font-size: 24px;
+    font-weight: 600;
+    color: #0073aa;
+}
+
+.qvc-stat-card p {
+    margin: 0;
+    font-size: 14px;
+    color: #666;
+}
+
+/* Filters */
+.qvc-filters {
+    background: #f8f9fa;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+}
+
+.qvc-filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.qvc-filter-group label {
+    font-weight: 500;
+    color: #555;
+    font-size: 14px;
+}
+
+.qvc-filter-group select {
+    padding: 4px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+/* Bulk Actions */
+.qvc-bulk-actions {
+    background: #fff;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Email List */
+.qvc-email-list {
+    background: #fff;
+    border: 1px solid #e1e5e9;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.qvc-email-item {
+    border-bottom: 1px solid #f1f1f1;
+    padding: 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: background-color 0.2s ease;
+}
+
+.qvc-email-item:hover {
+    background: #f8f9fa;
+}
+
+.qvc-email-item:last-child {
+    border-bottom: none;
+}
+
+.qvc-email-checkbox {
+    margin-top: 4px;
+}
+
+.qvc-email-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.qvc-email-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.qvc-email-from {
+    font-weight: 600;
+    color: #333;
+    font-size: 14px;
+}
+
+.qvc-email-date {
+    font-size: 12px;
+    color: #666;
+}
+
+.qvc-email-subject {
+    display: block;
+    font-size: 16px;
+    font-weight: 500;
+    color: #0073aa;
+    text-decoration: none;
+    margin-bottom: 4px;
+    cursor: pointer;
+}
+
+.qvc-email-subject:hover {
+    color: #005a87;
+    text-decoration: underline;
+}
+
+.qvc-email-preview {
+    font-size: 14px;
+    color: #666;
+    line-height: 1.4;
+    margin-bottom: 8px;
+}
+
+.qvc-email-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.qvc-email-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.qvc-email-badge.qvc-badge-priority.high {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.qvc-email-badge.qvc-badge-priority.medium {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.qvc-email-badge.qvc-badge-priority.low {
+    background: #e8f5e8;
+    color: #388e3c;
+}
+
+.qvc-email-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 120px;
+}
+
+.qvc-email-actions .qvc-action-btn {
+    font-size: 12px;
+    padding: 6px 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .qvc-modal-content {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .qvc-filters {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .qvc-filter-group {
+        justify-content: space-between;
+    }
+    
+    .qvc-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .qvc-email-item {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .qvc-email-actions {
+        flex-direction: row;
+        min-width: auto;
+    }
+}
