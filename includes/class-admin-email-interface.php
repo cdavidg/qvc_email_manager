@@ -843,31 +843,39 @@ class QvaClick_Admin_Email_Interface {
         if (isset($_POST['send_mass_email']) && wp_verify_nonce($_POST['qvc_nonce'], 'qvc_mass_email')) {
             error_log('QVC Email Manager: Procesando formulario de email masivo');
             
-            // Construir recipient_filter si viene selección desde la UI
+            // Construir recipient_filter y determinar el tipo efectivo según selección explícita
             $recipient_filter = '';
+            $effective_type = isset($_POST['recipient_type']) ? sanitize_text_field($_POST['recipient_type']) : 'all';
+
+            $ids = array();
+            $create_ids = array();
             if (!empty($_POST['selected_user_ids'])) {
                 $ids = array_filter(array_map('intval', explode(',', $_POST['selected_user_ids'])));
-                $create_ids = array();
-                if (!empty($_POST['create_ticket_user_ids'])) {
-                    $create_ids = array_filter(array_map('intval', explode(',', $_POST['create_ticket_user_ids'])));
-                }
-                $custom_email = !empty($_POST['custom_recipient_email']) ? sanitize_email($_POST['custom_recipient_email']) : '';
+            }
+            if (!empty($_POST['create_ticket_user_ids'])) {
+                $create_ids = array_filter(array_map('intval', explode(',', $_POST['create_ticket_user_ids'])));
+            }
+
+            if (!empty($ids)) {
+                // Si hay usuarios seleccionados, forzar envío solo a esos usuarios
                 $recipient_filter = wp_json_encode(array(
                     'ids' => array_values($ids),
-                    'create_ticket_user_ids' => array_values($create_ids),
-                    'custom_email' => $custom_email
+                    'create_ticket_user_ids' => array_values($create_ids)
                 ));
+                $effective_type = 'specific_user';
             } else {
+                // Mantener filtro de búsqueda libre si aplica (p.ej., para specific_user)
                 $recipient_filter = isset($_POST['recipient_filter']) ? sanitize_text_field($_POST['recipient_filter']) : '';
             }
 
+            $send_now_flag = !empty($_POST['send_now']);
             $data = array(
                 'campaign_name' => sanitize_text_field($_POST['campaign_name']),
                 'subject' => sanitize_text_field($_POST['subject']),
                 'content' => wp_kses_post($_POST['content']),
-                'recipient_type' => sanitize_text_field($_POST['recipient_type']),
+                'recipient_type' => $effective_type,
                 'recipient_filter' => $recipient_filter,
-                'status' => isset($_POST['send_now']) ? 'sending' : 'draft'
+                'status' => $send_now_flag ? 'sending' : 'draft'
             );
             
             error_log('QVC Email Manager: Datos de campaña - ' . print_r($data, true));
@@ -878,7 +886,7 @@ class QvaClick_Admin_Email_Interface {
             error_log('QVC Email Manager: Campaign ID creado: ' . $campaign_id);
             
             if ($campaign_id) {
-                if (isset($_POST['send_now'])) {
+                if ($send_now_flag) {
                     error_log('QVC Email Manager: Iniciando envío de campaña ID: ' . $campaign_id);
                     $result = $admin_email->send_mass_email($campaign_id);
                     error_log('QVC Email Manager: Resultado del envío - ' . print_r($result, true));
@@ -915,11 +923,7 @@ class QvaClick_Admin_Email_Interface {
                         <input type="text" name="campaign_name" id="campaign_name" required>
                     </div>
 
-                    <div class="qvc-form-row">
-                        <label for="custom_recipient_email"><?php _e('Enviar a correo personalizado:', 'qvaclick-email-manager'); ?></label>
-                        <input type="email" name="custom_recipient_email" id="custom_recipient_email" placeholder="ejemplo@mail.com">
-                        <small class="description"><?php _e('Enviar a un correo externo que no esté en la lista de usuarios.', 'qvaclick-email-manager'); ?></small>
-                    </div>
+
 
                     <div class="qvc-form-row">
                         <label for="subject"><?php _e('Asunto:', 'qvaclick-email-manager'); ?></label>
@@ -950,7 +954,7 @@ class QvaClick_Admin_Email_Interface {
                             <?php _e('Guardar Borrador', 'qvaclick-email-manager'); ?>
                         </button>
                         <button type="submit" name="send_mass_email" value="send_now" class="button button-primary" 
-                                onclick="this.form.send_now.value='1'; return confirm('<?php _e('¿Estás seguro de enviar este email a todos los destinatarios seleccionados?', 'qvaclick-email-manager'); ?>')">
+                                onclick="return qvcConfirmSendNow(this.form);">
                             <?php _e('Enviar Ahora', 'qvaclick-email-manager'); ?>
                         </button>
                         <input type="hidden" name="send_now" value="">
@@ -970,8 +974,17 @@ class QvaClick_Admin_Email_Interface {
                                 <option value="employers"><?php _e('Solo Employers', 'qvaclick-email-manager'); ?></option>
                                 <option value="admins"><?php _e('Solo Administradores', 'qvaclick-email-manager'); ?></option>
                                 <option value="specific_user"><?php _e('Buscar usuarios', 'qvaclick-email-manager'); ?></option>
-                                <option value="custom_list"><?php _e('Lista personalizada', 'qvaclick-email-manager'); ?></option>
+
                             </select>
+                            <div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">
+                                <button type="button" class="button" onclick="setRecipientType('all')"><?php _e('Todos', 'qvaclick-email-manager'); ?></button>
+                                <button type="button" class="button" onclick="setRecipientType('freelancers')"><?php _e('Freelancers', 'qvaclick-email-manager'); ?></button>
+                                <button type="button" class="button" onclick="setRecipientType('employers')"><?php _e('Employers', 'qvaclick-email-manager'); ?></button>
+                                <button type="button" class="button" onclick="setRecipientType('admins')"><?php _e('Admins', 'qvaclick-email-manager'); ?></button>
+                            </div>
+                            <div id="segment_selection_notice" class="notice notice-info" style="display:none;margin-top:8px;">
+                                <p style="margin:8px 0;">&nbsp;</p>
+                            </div>
                         </div>
 
                         <div class="qvc-form-row" id="recipient_filter_row" style="display: none;">
@@ -1006,15 +1019,89 @@ class QvaClick_Admin_Email_Interface {
             const type = document.getElementById('recipient_type').value;
             const filterRow = document.getElementById('recipient_filter_row');
             const preview = document.getElementById('recipient_preview');
-            
-            if (type === 'specific_user' || type === 'custom_list') {
+            if (type === 'specific_user') {
                 filterRow.style.display = 'block';
             } else {
                 filterRow.style.display = 'none';
             }
-            
-            // Load preview via AJAX
+            updateSegmentNotice();
             loadRecipientPreview();
+        }
+        
+        // Helper para botones de selección rápida
+        var qvc_send_to_all_segment = false;
+        var qvc_active_segment = null;
+        var qvc_selected_users_backup = null;
+        var qvc_create_ticket_users_backup = null;
+        function setRecipientType(type) {
+            var sel = document.getElementById('recipient_type');
+            if (!sel) return;
+            // Toggle behavior: if clicking same active segment, revert to specific_user (selection only)
+            if (qvc_active_segment === type) {
+                qvc_active_segment = null;
+                qvc_send_to_all_segment = false;
+                sel.value = 'specific_user';
+                // Restore previous selection if available
+                if (qvc_selected_users_backup) { qvc_selected_users = qvc_selected_users_backup; }
+                if (qvc_create_ticket_users_backup) { qvc_create_ticket_users = qvc_create_ticket_users_backup; }
+                qvc_selected_users_backup = null;
+                qvc_create_ticket_users_backup = null;
+                // Show filter for specific_user
+                if (typeof jQuery !== 'undefined') { jQuery(sel).trigger('change'); } else { toggleRecipientFilter(); }
+                updateSelectedUsers();
+                // Explicitly hide banner
+                (function(){ var n = document.getElementById('segment_selection_notice'); if (n) { var p = n.querySelector('p'); if (p) p.textContent=''; n.style.display='none'; } })();
+                updateSegmentNotice();
+                loadRecipientPreview(1);
+                return;
+            }
+
+            // Activate new segment: store current selection and clear it
+            qvc_active_segment = type;
+            qvc_send_to_all_segment = true;
+            qvc_selected_users_backup = Object.assign({}, qvc_selected_users || {});
+            qvc_create_ticket_users_backup = Object.assign({}, qvc_create_ticket_users || {});
+            qvc_selected_users = {};
+            qvc_create_ticket_users = {};
+            updateSelectedUsers();
+
+            sel.value = type;
+            // Limpiar filtros de búsqueda cuando corresponde
+            if (type !== 'specific_user') {
+                var rf = document.getElementById('recipient_filter');
+                if (rf) rf.value = '';
+            }
+            // Disparar cambios de UI y refrescar preview
+            if (typeof jQuery !== 'undefined') { jQuery(sel).trigger('change'); } else { toggleRecipientFilter(); }
+            updateSegmentNotice();
+            loadRecipientPreview(1);
+        }
+
+        function getSegmentLabel(type) {
+            switch (type) {
+                case 'all': return '<?php echo esc_js(__('usuarios', 'qvaclick-email-manager')); ?>';
+                case 'freelancers': return '<?php echo esc_js(__('Freelancers', 'qvaclick-email-manager')); ?>';
+                case 'employers': return '<?php echo esc_js(__('Employers', 'qvaclick-email-manager')); ?>';
+                case 'admins': return '<?php echo esc_js(__('Administradores', 'qvaclick-email-manager')); ?>';
+                default: return '';
+            }
+        }
+
+        function updateSegmentNotice() {
+            var sel = document.getElementById('recipient_type');
+            var notice = document.getElementById('segment_selection_notice');
+            if (!sel || !notice) return;
+            var type = sel.value;
+            if (type === 'specific_user') {
+                notice.style.display = 'none';
+                return;
+            }
+            if (!qvc_send_to_all_segment) { notice.style.display = 'none'; return; }
+            var label = getSegmentLabel(type);
+            if (!label) { notice.style.display = 'none'; return; }
+            var p = notice.querySelector('p');
+            if (p) p.textContent = '<?php echo esc_js(__('Se enviará a todos los', 'qvaclick-email-manager')); ?> ' + label + '.';
+            notice.style.display = 'block';
         }
         
         // Pagination state
@@ -1062,7 +1149,54 @@ class QvaClick_Admin_Email_Interface {
         }
         
         // Load initial preview
-        document.addEventListener('DOMContentLoaded', loadRecipientPreview);
+        document.addEventListener('DOMContentLoaded', function(){
+            updateSegmentNotice();
+            loadRecipientPreview();
+            var sel = document.getElementById('recipient_type');
+            if (sel) {
+                sel.addEventListener('click', function(){ qvc_send_to_all_segment = false; qvc_active_segment = null; updateSegmentNotice(); });
+                sel.addEventListener('change', function(){ qvc_send_to_all_segment = false; qvc_active_segment = null; updateSegmentNotice(); });
+            }
+        });
+
+        function qvcConfirmSendNow(form) {
+            try { updateSelectedUsers(); } catch(e) {}
+            var type = (document.getElementById('recipient_type')||{}).value || 'all';
+            var selectedIdsField = document.getElementById('selected_user_ids');
+            var selectedIds = selectedIdsField && selectedIdsField.value ? selectedIdsField.value.split(',').filter(Boolean) : [];
+            var message;
+            // If an active segment is toggled on, always confirm as segment
+            if (qvc_active_segment && qvc_send_to_all_segment && type === qvc_active_segment) {
+                var label = getSegmentLabel(type) || '<?php echo esc_js(__('usuarios', 'qvaclick-email-manager')); ?>';
+                var preview = document.getElementById('recipient_preview');
+                var count = '?';
+                if (preview && preview.textContent) {
+                    var m = preview.textContent.match(/(\d+)\s+destinatarios/i);
+                    if (m) count = m[1];
+                }
+                message = '<?php echo esc_js(__('¿Enviar inmediatamente a todos los', 'qvaclick-email-manager')); ?>' + ' ' + label + ' ('+count+' <?php echo esc_js(__('destinatarios', 'qvaclick-email-manager')); ?>)?';
+            } else if (selectedIds.length > 0) {
+                message = '<?php echo esc_js(__('¿Enviar inmediatamente a los siguientes usuarios seleccionados?', 'qvaclick-email-manager')); ?>' + "\n\n" + selectedIds.map(function(id){return 'ID: '+id;}).join(', ');
+            } else {
+                // Not a segment and no explicit user list; build a generic confirmation using current preview count
+                var preview = document.getElementById('recipient_preview');
+                var count = '?';
+                if (preview && preview.textContent) {
+                    var m = preview.textContent.match(/(\d+)\s+destinatarios/i);
+                    if (m) count = m[1];
+                }
+                if (count === '?' || count === '0') {
+                    alert('<?php echo esc_js(__('No hay destinatarios para enviar. Ajusta la selección antes de continuar.', 'qvaclick-email-manager')); ?>');
+                    return false;
+                }
+                message = '<?php echo esc_js(__('¿Enviar inmediatamente a', 'qvaclick-email-manager')); ?>' + ' ' + count + ' <?php echo esc_js(__('destinatarios', 'qvaclick-email-manager')); ?>?';
+            }
+            if (confirm(message)) {
+                form.send_now.value = '1';
+                return true;
+            }
+            return false;
+        }
         document.getElementById('recipient_filter').addEventListener('input', loadRecipientPreview);
 
         // Persistent selection across pages
@@ -1082,6 +1216,15 @@ class QvaClick_Admin_Email_Interface {
                 if (cb && qvc_selected_users[uid]) cb.checked = true;
                 if (ticketCb && qvc_create_ticket_users[uid]) ticketCb.checked = true;
             });
+
+            // Segment mode: visually select all and disable toggles on this page
+            if (qvc_active_segment && qvc_send_to_all_segment) {
+                table.querySelectorAll('.qvc-select-user').forEach(function(cb){ cb.checked = true; cb.disabled = true; });
+                table.querySelectorAll('.qvc-create-ticket-user').forEach(function(cb){ cb.disabled = true; });
+            } else {
+                table.querySelectorAll('.qvc-select-user').forEach(function(cb){ cb.disabled = false; });
+                table.querySelectorAll('.qvc-create-ticket-user').forEach(function(cb){ cb.disabled = false; });
+            }
 
             // Delegation for selection checkboxes
             table.querySelectorAll('.qvc-select-user').forEach(function(cb) {
@@ -1123,6 +1266,18 @@ class QvaClick_Admin_Email_Interface {
             const hidden = document.getElementById('selected_user_ids');
             const createHidden = document.getElementById('create_ticket_user_ids');
             selectedContainer.innerHTML = '';
+
+            // In segment mode, do not populate hidden IDs; show an informative message
+            if (qvc_active_segment && qvc_send_to_all_segment) {
+                hidden.value = '';
+                createHidden.value = '';
+                if (selectedContainer) {
+                    selectedContainer.innerHTML = '<em><?php _e('Se enviará a todo el segmento seleccionado', 'qvaclick-email-manager'); ?></em>';
+                    var selWrap = document.getElementById('selected_users');
+                    if (selWrap) selWrap.style.display = 'block';
+                }
+                return;
+            }
 
             const selectedIds = Object.keys(qvc_selected_users || {});
             if (selectedIds.length === 0) {
