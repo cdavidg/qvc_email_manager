@@ -159,7 +159,7 @@ class QvaClick_Admin_Email_Manager {
                 campaign_name varchar(255) NOT NULL,
                 subject varchar(500) NOT NULL,
                 content longtext NOT NULL,
-                recipient_type enum('all','freelancers','employers','admins','specific_user','custom_list') NOT NULL,
+                recipient_type enum('all','freelancers','employers','admins','specific_user') NOT NULL,
                 recipient_filter text NULL,
                 status enum('draft','scheduled','sending','sent','failed') DEFAULT 'draft',
                 scheduled_at timestamp NULL,
@@ -794,7 +794,7 @@ class QvaClick_Admin_Email_Manager {
         
         $recipients = array();
 
-        // Soporte para filtros serializados en JSON desde la UI (ids, create_tickets, custom_email)
+    // Soporte para filtros serializados en JSON desde la UI (ids, create_tickets)
         $parsed_filter = null;
         if (!empty($filter) && is_string($filter) && ($filter[0] === '{' || $filter[0] === '[')) {
             $decoded = json_decode($filter, true);
@@ -824,6 +824,22 @@ class QvaClick_Admin_Email_Manager {
                 'name' => $name ?: $email
             );
         };
+
+        // PRIORIDAD: Si vienen IDs explícitos en el filtro JSON, respetarlos SIEMPRE
+        if ($parsed_filter && is_array($parsed_filter)) {
+            $has_ids = isset($parsed_filter['ids']) && is_array($parsed_filter['ids']) && count($parsed_filter['ids']) > 0;
+            if ($has_ids) {
+                if ($has_ids) {
+                    $ids = array_map('intval', $parsed_filter['ids']);
+                    $slice = ($per_page > 0) ? array_slice($ids, ($page - 1) * $per_page, $per_page) : $ids;
+                    $users = get_users(array('include' => $slice, 'fields' => array('ID','user_email','display_name')));
+                    foreach ($users as $u) { $add_user_to_recipients($u); }
+                }
+                error_log('QVC Email Manager: get_mass_email_recipients explicit selection count: ' . count($recipients));
+                $this->last_recipient_total = count($recipients);
+                return $recipients;
+            }
+        }
 
         // CASE: all users
         if ($type === 'all') {
@@ -855,10 +871,6 @@ class QvaClick_Admin_Email_Manager {
             }
             $users = get_users(array('include' => $slice, 'fields' => array('ID','user_email','display_name')));
             foreach ($users as $u) $add_user_to_recipients($u);
-            // Añadir correo custom si existe
-            if (!empty($parsed_filter['custom_email']) && is_email($parsed_filter['custom_email'])) {
-                $add_user_to_recipients(array('user_email' => $parsed_filter['custom_email'], 'display_name' => $parsed_filter['custom_email']));
-            }
             error_log('QVC Email Manager: get_mass_email_recipients parsed ids count: ' . count($recipients));
             $this->last_recipient_total = count($recipients);
             return $recipients;
@@ -999,6 +1011,7 @@ class QvaClick_Admin_Email_Manager {
                 $user = get_user_by('id', intval($filter));
                 $add_user_to_recipients($user);
             } elseif (is_email($filter)) {
+                // Solo usuarios registrados: si no existe, no agregar
                 $user = get_user_by('email', $filter);
                 $add_user_to_recipients($user);
             } else {
@@ -1017,19 +1030,7 @@ class QvaClick_Admin_Email_Manager {
             $this->last_recipient_total = count($recipients);
             return $recipients;
         }
-
-        // CASE: custom_list - comma separated emails
-        if ($type === 'custom_list' && $filter) {
-            $emails = array_map('trim', explode(',', $filter));
-            foreach ($emails as $email) {
-                if (!is_email($email)) continue;
-                $user = get_user_by('email', $email);
-                $add_user_to_recipients($user ?: array('user_email' => $email, 'display_name' => $email));
-            }
-            error_log('QVC Email Manager: get_mass_email_recipients custom_list count: ' . count($recipients));
-            $this->last_recipient_total = count($recipients);
-            return $recipients;
-        }
+        // Eliminado: custom_list (solo usuarios registrados)
 
         // Default: return empty recipients and log
     error_log('QVC Email Manager: get_mass_email_recipients - unknown type or no recipients found for type: ' . $type);
@@ -1102,15 +1103,11 @@ class QvaClick_Admin_Email_Manager {
         
         // Parse recipient_filter to detect per-recipient create-ticket flags
         $create_ticket_ids = array();
-        $custom_email_flag = null;
         if (!empty($mass_email->recipient_filter) && (strpos($mass_email->recipient_filter, '{') === 0 || strpos($mass_email->recipient_filter, '[') === 0)) {
             $decoded = json_decode($mass_email->recipient_filter, true);
             if (json_last_error() === JSON_ERROR_NONE) {
                 if (!empty($decoded['create_ticket_user_ids']) && is_array($decoded['create_ticket_user_ids'])) {
                     $create_ticket_ids = array_map('intval', $decoded['create_ticket_user_ids']);
-                }
-                if (!empty($decoded['custom_email'])) {
-                    $custom_email_flag = $decoded['custom_email'];
                 }
             }
         }
