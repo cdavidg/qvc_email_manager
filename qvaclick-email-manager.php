@@ -3,7 +3,7 @@
  * Plugin Name: QvaClick Email Manager V1
  * Plugin URI: https://qvaclick.com/
  * Description: QvaClick Email Manager V1 es un plugin avanzado para la gestión de correos electrónicos en WordPress, diseñado para integrarse con el Tema Exertio y el plugin Exertio Framework. Ofrece funcionalidades como creación y gestión de plantillas de correo, envío masivo de campañas, sistema de tickets de soporte, integración con formularios de contacto, manejo de correos IMAP, configuración personalizada de SMTP, y un sistema de notificaciones. Incluye herramientas avanzadas como sincronización con Redux, tracking de emails, analytics, y soporte para eventos personalizados mediante hooks. Ideal para automatizar y optimizar la comunicación por correo electrónico en proyectos complejos.
- * Version: 3.2.5
+ * Version: 3.2.6
  * Author: David Guerra | @cedav95 | QvaClick Team
  * License: GPL v2 or later
  * Text Domain: qvaclick-email-manager
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Define plugin constants
-define('QVC_EMAIL_MANAGER_VERSION', '3.2.5');
+define('QVC_EMAIL_MANAGER_VERSION', '3.2.6');
 define('QVC_EMAIL_MANAGER_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('QVC_EMAIL_MANAGER_PLUGIN_URL', plugin_dir_url(__FILE__));
 
